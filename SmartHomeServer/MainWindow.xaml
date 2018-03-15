@@ -18,8 +18,6 @@
                             <DockPanel Margin="4">
                                 <Label Content="Connection:" />
                                 <Label Name="LightSwitcherConnectionValueLabel" Content="null" />
-                                
-                                <Button Name="LightSwitcherConnectButton" HorizontalAlignment="Right" Width="64" Content="Connect" />
                             </DockPanel>
 
                             <Separator />
@@ -40,8 +38,6 @@
                             <DockPanel Margin="4">
                                 <Label Content="Connection:" />
                                 <Label Name="ThermometerConnectionValueLabel" Content="null" />
-
-                                <Button Name="ThermometerConnectButton" HorizontalAlignment="Right" Width="64" Content="Connect" />
                             </DockPanel>
 
                             <Separator />
@@ -71,8 +67,6 @@
                             <DockPanel Margin="4">
                                 <Label Content="Connection:" />
                                 <Label Name="MotionDetectorConnectionValueLabel" Content="null" />
-
-                                <Button Name="MotionDetectorConnectButton" HorizontalAlignment="Right" Width="64" Content="Connect" />
                             </DockPanel>
 
                             <Separator />
