@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmartHomeServer"
         mc:Ignorable="d"
-        Title="SmartHomeServer" MinHeight="500" Height="500" MaxHeight="500" MinWidth="400" Width="400">
+        Title="SmartHomeServer" MinHeight="600" Height="600" MaxHeight="600" MinWidth="400" Width="400">
 
     <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch">
         <GroupBox Header="Server:" Margin="8">
@@ -90,6 +90,16 @@
                             </DockPanel>
 
                         </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Log" Margin="4">
+                        <Grid>
+                            <StackPanel Margin="4" Orientation="Vertical">
+
+                                <TextBox Name="LogTextBlock" Height="96" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+
+                            </StackPanel>
+                        </Grid>
                     </GroupBox>
 
                 </StackPanel>
