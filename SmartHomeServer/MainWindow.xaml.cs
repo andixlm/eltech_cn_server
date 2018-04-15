@@ -123,7 +123,11 @@ namespace SmartHomeServer
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
                 StartServerButton.IsEnabled = !StartServerButton.IsEnabled;
                 StopServerButton.IsEnabled = !StopServerButton.IsEnabled;
-                /// TODO: Start listener thread.
+
+                for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
+                {
+                    _ListenerThreads[idx].Start();
+                }
             }
             catch (Exception exc)
             {
