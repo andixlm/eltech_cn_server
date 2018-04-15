@@ -68,6 +68,7 @@ namespace SmartHomeServer
         {
             _NetworkListener = default(TcpListener);
 
+            _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
         }
 
@@ -88,8 +89,6 @@ namespace SmartHomeServer
                 StopServer();
             };
 
-            /// TODO: Move creation to Init().
-            _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
                 _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
