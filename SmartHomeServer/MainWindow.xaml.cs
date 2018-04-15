@@ -44,6 +44,7 @@ namespace SmartHomeServer
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temparatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
 
+        private static readonly int MAXIMAL_CLIENTS_NUM_VALUE = 3;
         private static readonly int MAXIMAL_THREADS_NUM_VALUE = 3;
 
         private static readonly Random sRandom = new Random();
@@ -51,6 +52,7 @@ namespace SmartHomeServer
         private TcpListener _NetworkListener;
 
         private Thread[] _ListenerThreads;
+        private TcpClient[] _Sockets;
 
         private int _Port;
 
@@ -65,6 +67,8 @@ namespace SmartHomeServer
         private void Init()
         {
             _NetworkListener = default(TcpListener);
+
+            _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
         }
 
         private void Configure()
@@ -84,12 +88,21 @@ namespace SmartHomeServer
                 StopServer();
             };
 
+            /// TODO: Move creation to Init().
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
                 _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
                 {
-                    /// TODO: Listen to connections.
+                    try
+                    {
+                        _Sockets[idx] = _NetworkListener.AcceptTcpClient();
+                        /// TODO: Get stream and handle client.
+                    }
+                    catch (Exception exc)
+                    {
+                        /// TODO: Log.
+                    }
                 }));
             }
         }
