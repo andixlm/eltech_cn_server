@@ -16,12 +16,13 @@
                         <Label Content="Server status:" />
                         <Label Name="ServerStatusLabel" Content="down" />
 
-                        <Label Content=" | " />
+                        <Label Content="|" />
 
-                        <Label Content="Port number: " />
-                        <TextBox Name="PortTextBox" Width="44" />
+                        <Label Content="Port: " />
+                        <TextBox Name="PortTextBox" Width="44" Margin="4" />
 
                         <Button Name="StartServerButton" HorizontalAlignment="Right" Width="64" Content="Start" />
+                        <Button Name="StopServerButton" HorizontalAlignment="Right" Width="64" Content="Stop" />
                     </DockPanel>
 
                     <GroupBox Header="Light switcher" Margin="8">
