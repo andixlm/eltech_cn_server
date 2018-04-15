@@ -154,6 +154,12 @@ namespace SmartHomeServer
             string data = Encoding.Unicode.GetString(bytes);
             data = data.Substring(0, data.IndexOf("$"));
 
+            if (string.IsNullOrEmpty(data))
+            {
+                /// TODO: Log about empty data received.
+                return;
+            }
+
             int idx;
             if ((idx = data.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
             {
