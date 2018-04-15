@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace SmartHomeServer
 
         private static readonly string IPADDRESS_LOG_LABEL = "IP Address: ";
 
+        private static readonly string LOCALHOST_IPADDRESS = "127.0.0.1";
+
         private static readonly string PORT_LOG_LABEL = "Port: ";
         private static readonly int MINIMAL_PORT_VALUE = 1024;
         private static readonly int MAXIMAL_PORT_VALUE = 49151;
@@ -40,6 +43,12 @@ namespace SmartHomeServer
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temparatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
 
+        private static readonly Random sRandom = new Random();
+
+        private TcpListener _NetworkListener;
+
+        private int _Port;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -50,12 +59,39 @@ namespace SmartHomeServer
 
         private void Init()
         {
-
+            _NetworkListener = default(TcpListener);
         }
 
         private void Configure()
         {
+            _Port = sRandom.Next(MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE);
+            PortTextBox.Text = _Port.ToString();
 
+            StartServerButton.Click += (sender, e) =>
+            {
+                StartServer();
+            };
+        }
+
+        private void StartServer()
+        {
+            try
+            {
+                _Port = int.Parse(PortTextBox.Text);
+                if (_Port < MINIMAL_PORT_VALUE || _Port > MAXIMAL_PORT_VALUE)
+                {
+                    throw new Exception(string.Format("Incorrect port value. [{0}; {1}] ports are allowed.",
+                        MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE));
+                }
+
+                _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
+                /// TODO: Start listener thread.
+            }
+            catch (Exception exc)
+            {
+                /// TODO: Log.
+                return;
+            }
         }
 
         private void Send(TcpClient socket, byte[] bytes)
