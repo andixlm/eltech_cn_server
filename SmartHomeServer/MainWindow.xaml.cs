@@ -55,6 +55,8 @@ namespace SmartHomeServer
         private Thread[] _ListenerThreads;
         private TcpClient[] _Sockets;
 
+        private int _ThermometerIdx;
+
         private int _Port;
 
         public MainWindow()
@@ -97,7 +99,7 @@ namespace SmartHomeServer
                     try
                     {
                         _Sockets[idx] = _NetworkListener.AcceptTcpClient();
-                        HandleNewClient(_Sockets[idx]);
+                        HandleNewClient(_Sockets[idx], idx);
                     }
                     catch (Exception exc)
                     {
@@ -142,7 +144,7 @@ namespace SmartHomeServer
             stream.Flush();
         }
 
-        private void HandleNewClient(TcpClient socket)
+        private void HandleNewClient(TcpClient socket, int socketIdx)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
 
@@ -158,7 +160,8 @@ namespace SmartHomeServer
                 string device = data.Substring(idx + NETWORK_DEVICE_ARG.Length, data.IndexOf("$)"));
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
-                    /// TODO: Handle thermometer.
+                    _ThermometerIdx = idx;
+                    HandleThermometer();
                 }
                 else /// TODO: Handle other devices.
                 {
@@ -169,6 +172,12 @@ namespace SmartHomeServer
             {
                 /// TODO: Log about unknown data received.
             }
+        }
+
+        private void HandleThermometer()
+        {
+            ThermometerConnectionValueLabel.Content = CONNECTION_UP;
+            /// TODO: Receive update interval.
         }
 
         private void ProcessData(string data)
