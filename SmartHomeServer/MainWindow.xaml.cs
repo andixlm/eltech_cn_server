@@ -128,6 +128,8 @@ namespace SmartHomeServer
                 {
                     _ListenerThreads[idx].Start();
                 }
+
+                ServerStatusLabel.Content = CONNECTION_UP;
             }
             catch (Exception exc)
             {
