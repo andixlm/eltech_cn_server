@@ -67,9 +67,16 @@ namespace SmartHomeServer
             _Port = sRandom.Next(MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE);
             PortTextBox.Text = _Port.ToString();
 
+            StartServerButton.IsEnabled = true;
             StartServerButton.Click += (sender, e) =>
             {
                 StartServer();
+            };
+
+            StopServerButton.IsEnabled = false;
+            StopServerButton.Click += (sender, e) =>
+            {
+                StopServer();
             };
         }
 
@@ -85,6 +92,8 @@ namespace SmartHomeServer
                 }
 
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
+                StartServerButton.IsEnabled = !StartServerButton.IsEnabled;
+                StopServerButton.IsEnabled = !StopServerButton.IsEnabled;
                 /// TODO: Start listener thread.
             }
             catch (Exception exc)
@@ -92,6 +101,11 @@ namespace SmartHomeServer
                 /// TODO: Log.
                 return;
             }
+        }
+
+        private void StopServer()
+        {
+            _NetworkListener.Stop();
         }
 
         private void Send(TcpClient socket, byte[] bytes)
