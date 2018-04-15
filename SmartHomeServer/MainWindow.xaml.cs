@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -43,9 +44,13 @@ namespace SmartHomeServer
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temparatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
 
+        private static readonly int MAXIMAL_THREADS_NUM_VALUE = 3;
+
         private static readonly Random sRandom = new Random();
 
         private TcpListener _NetworkListener;
+
+        private Thread[] _ListenerThreads;
 
         private int _Port;
 
@@ -78,6 +83,15 @@ namespace SmartHomeServer
             {
                 StopServer();
             };
+
+            _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
+            for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
+            {
+                _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
+                {
+                    /// TODO: Listen to connections.
+                }));
+            }
         }
 
         private void StartServer()
