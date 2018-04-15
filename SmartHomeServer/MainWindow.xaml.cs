@@ -182,8 +182,11 @@ namespace SmartHomeServer
 
         private void HandleThermometer()
         {
-            ThermometerConnectionValueLabel.Content = CONNECTION_UP;
-            /// TODO: Receive update interval.
+            Dispatcher.Invoke(delegate ()
+            {
+                ThermometerConnectionValueLabel.Content = CONNECTION_UP;
+                /// TODO: Receive update interval.
+            });
         }
 
         private void ProcessData(string data)
