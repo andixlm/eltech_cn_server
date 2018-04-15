@@ -103,7 +103,11 @@ namespace SmartHomeServer
                     }
                     catch (Exception exc)
                     {
-                        /// TODO: Log.
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + "\n");
+                            LogTextBlock.ScrollToEnd();
+                        });
                     }
                 }));
             }
@@ -130,10 +134,14 @@ namespace SmartHomeServer
                 }
 
                 ServerStatusLabel.Content = CONNECTION_UP;
+
+                LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Server successfully started." + "\n");
+                LogTextBlock.ScrollToEnd();
             }
             catch (Exception exc)
             {
-                /// TODO: Log.
+                LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Unable to start server: " + exc.Message + "\n");
+                LogTextBlock.ScrollToEnd();
                 return;
             }
         }
@@ -162,7 +170,11 @@ namespace SmartHomeServer
 
             if (string.IsNullOrEmpty(data))
             {
-                /// TODO: Log about empty data received.
+                Dispatcher.Invoke(delegate ()
+                {
+                    LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Empty data received." + "\n");
+                    LogTextBlock.ScrollToEnd();
+                });
                 return;
             }
 
@@ -177,12 +189,20 @@ namespace SmartHomeServer
                 }
                 else /// TODO: Handle other devices.
                 {
-                    /// Log about unknown device.
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Unknown device tried to connect." + "\n");
+                        LogTextBlock.ScrollToEnd();
+                    });
                 }
             }
             else
             {
-                /// TODO: Log about unknown data received.
+                Dispatcher.Invoke(delegate ()
+                {
+                    LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Unknown data received." + "\n");
+                    LogTextBlock.ScrollToEnd();
+                });
             }
         }
 
