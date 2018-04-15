@@ -41,6 +41,7 @@ namespace SmartHomeServer
         private static readonly string NETWORK_LOG_LABEL = "Network: ";
 
         private static readonly string NETWORK_DEVICE_ARG = "Device: ";
+        private static readonly string NETWORK_DEVICE_THERMOMETER = "Thermometer";
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temparatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
 
@@ -96,7 +97,7 @@ namespace SmartHomeServer
                     try
                     {
                         _Sockets[idx] = _NetworkListener.AcceptTcpClient();
-                        /// TODO: Get stream and handle client.
+                        HandleNewClient(_Sockets[idx]);
                     }
                     catch (Exception exc)
                     {
@@ -139,6 +140,35 @@ namespace SmartHomeServer
             NetworkStream stream = socket.GetStream();
             stream.Write(bytes, 0, bytes.Length);
             stream.Flush();
+        }
+
+        private void HandleNewClient(TcpClient socket)
+        {
+            byte[] bytes = new byte[BUFFER_SIZE];
+
+            NetworkStream stream = socket.GetStream();
+            stream.Read(bytes, 0, socket.ReceiveBufferSize);
+
+            string data = Encoding.Unicode.GetString(bytes);
+            data = data.Substring(0, data.IndexOf("$"));
+
+            int idx;
+            if ((idx = data.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
+            {
+                string device = data.Substring(idx + NETWORK_DEVICE_ARG.Length, data.IndexOf("$)"));
+                if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
+                {
+                    /// TODO: Handle thermometer.
+                }
+                else /// TODO: Handle other devices.
+                {
+                    /// Log about unknown device.
+                }
+            }
+            else
+            {
+                /// TODO: Log about unknown data received.
+            }
         }
 
         private void ProcessData(string data)
