@@ -5,12 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmartHomeServer"
         mc:Ignorable="d"
-        Title="SmartHomeServer" MinHeight="440" Height="440" MaxHeight="440" MinWidth="350" Width="350">
+        Title="SmartHomeServer" MinHeight="500" Height="500" MaxHeight="500" MinWidth="400" Width="400">
 
     <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch">
-        <GroupBox Header="Devices:" Margin="8">
+        <GroupBox Header="Server:" Margin="8">
             <Grid>
                 <StackPanel Margin="4" Orientation="Vertical">
+
+                    <DockPanel Margin="4">
+                        <Label Content="Server status:" />
+                        <Label Name="ServerStatusLabel" Content="down" />
+
+                        <Label Content=" | " />
+
+                        <Label Content="Port number: " />
+                        <TextBox Name="PortTextBox" Width="44" />
+
+                        <Button Name="StartServerButton" HorizontalAlignment="Right" Width="64" Content="Start" />
+                    </DockPanel>
 
                     <GroupBox Header="Light switcher" Margin="8">
                         <StackPanel Margin="4" Orientation="Vertical">
