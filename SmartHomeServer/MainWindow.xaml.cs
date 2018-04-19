@@ -55,6 +55,7 @@ namespace SmartHomeServer
         private Thread[] _ListenerThreads;
         private TcpClient[] _Sockets;
 
+        private int _SocketsIdx;
         private int _ThermometerIdx;
 
         private int _Port;
@@ -72,6 +73,7 @@ namespace SmartHomeServer
             _NetworkListener = default(TcpListener);
 
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
+            _SocketsIdx = 0;
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
         }
 
@@ -98,8 +100,13 @@ namespace SmartHomeServer
                 {
                     try
                     {
-                        _Sockets[idx] = _NetworkListener.AcceptTcpClient();
-                        HandleNewClient(_Sockets[idx], idx);
+                        TcpClient socket = _NetworkListener.AcceptTcpClient();
+
+                        _Sockets[_SocketsIdx] = socket;
+                        HandleNewClient(_Sockets[_SocketsIdx], _SocketsIdx);
+
+                        _SocketsIdx++;
+                        /// TODO: Check if more than three connections.
                     }
                     catch (Exception exc)
                     {
