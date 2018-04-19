@@ -165,8 +165,9 @@ namespace SmartHomeServer
             NetworkStream stream = socket.GetStream();
             stream.Read(bytes, 0, socket.ReceiveBufferSize);
 
+            /// TODO: Parse, cache received data and process later.
             string data = Encoding.Unicode.GetString(bytes);
-            data = data.Substring(0, data.IndexOf("$"));
+            data = data.Substring(0, data.IndexOf(';') + 1);
 
             if (string.IsNullOrEmpty(data))
             {
