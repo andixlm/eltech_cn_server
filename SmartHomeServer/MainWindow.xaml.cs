@@ -132,6 +132,7 @@ namespace SmartHomeServer
                 }
 
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
+                _NetworkListener.Start();
                 StartServerButton.IsEnabled = !StartServerButton.IsEnabled;
                 StopServerButton.IsEnabled = !StopServerButton.IsEnabled;
 
