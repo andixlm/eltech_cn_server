@@ -213,6 +213,8 @@ namespace SmartHomeServer
             Dispatcher.Invoke(delegate ()
             {
                 ThermometerConnectionValueLabel.Content = CONNECTION_UP;
+                LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + "\n");
+                LogTextBlock.ScrollToEnd();
                 /// TODO: Receive update interval.
             });
         }
