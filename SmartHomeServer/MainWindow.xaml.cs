@@ -42,7 +42,7 @@ namespace SmartHomeServer
 
         private static readonly string NETWORK_DEVICE_ARG = "Device: ";
         private static readonly string NETWORK_DEVICE_THERMOMETER = "Thermometer";
-        private static readonly string NETWORK_TEMPERATURE_ARG = "Temparatute: ";
+        private static readonly string NETWORK_TEMPERATURE_ARG = "Temperatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
 
         private static readonly int MAXIMAL_CLIENTS_NUM_VALUE = 3;
