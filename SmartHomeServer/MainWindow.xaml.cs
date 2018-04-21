@@ -235,8 +235,15 @@ namespace SmartHomeServer
                 ThermometerConnectionValueLabel.Content = CONNECTION_UP;
                 LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + "\n");
                 LogTextBlock.ScrollToEnd();
-                /// TODO: Receive update interval.
             });
+
+            byte[] bytes = new byte[BUFFER_SIZE];
+            Receive(_Sockets[_ThermometerIdx], bytes);
+
+            string data = Encoding.Unicode.GetString(bytes);
+            data = data.Substring(0, data.IndexOf(";") + 1);
+
+            ProcessThermometerData(data);
         }
 
         private void ProcessData(string data)
