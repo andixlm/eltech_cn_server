@@ -53,6 +53,8 @@ namespace SmartHomeServer
         private TcpListener _NetworkListener;
 
         private Thread[] _ListenerThreads;
+        private Thread[] _WorkerThreads;
+
         private TcpClient[] _Sockets;
 
         private Mutex _ListenerMutex;
@@ -75,6 +77,8 @@ namespace SmartHomeServer
             _NetworkListener = default(TcpListener);
 
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
+            _WorkerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
+
             _SocketsIdx = 0;
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
@@ -242,13 +246,20 @@ namespace SmartHomeServer
                 LogTextBlock.ScrollToEnd();
             });
 
-            byte[] bytes = new byte[BUFFER_SIZE];
-            Receive(_Sockets[_ThermometerIdx], bytes);
+            _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
+            {
+                while (true)
+                {
+                    byte[] bytes = new byte[BUFFER_SIZE];
+                    Receive(_Sockets[_ThermometerIdx], bytes);
 
-            string data = Encoding.Unicode.GetString(bytes);
-            data = data.Substring(0, data.IndexOf(";") + 1);
+                    string data = Encoding.Unicode.GetString(bytes);
+                    data = data.Substring(0, data.IndexOf(";") + 1);
 
-            ProcessThermometerData(data);
+                    ProcessThermometerData(data);
+                }
+            }));
+            _WorkerThreads[_ThermometerIdx].Start();
         }
 
         private void ProcessData(string data)
