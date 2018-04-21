@@ -263,9 +263,19 @@ namespace SmartHomeServer
             _WorkerThreads[_ThermometerIdx].Start();
         }
 
-        private void ProcessData(string data)
+        string ProcessData(string data, ref List<string> cache)
         {
+            int delimiterIdx = data.IndexOf(';');
+            string first = data.Substring(0, delimiterIdx + 1);
 
+            data = data.Substring(delimiterIdx + 1, data.Length - delimiterIdx - 1);
+            for (delimiterIdx = data.IndexOf(';'); delimiterIdx >= 0; delimiterIdx = data.IndexOf(';'))
+            {
+                cache.Add(data.Substring(0, delimiterIdx + 1));
+                data = data.Substring(delimiterIdx + 1, data.Length - delimiterIdx - 1);
+            }
+
+            return first;
         }
 
         private void ProcessThermometerData(string data)
