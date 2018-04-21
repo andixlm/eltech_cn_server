@@ -172,6 +172,12 @@ namespace SmartHomeServer
             stream.Flush();
         }
 
+        private void Receive(TcpClient socket, byte[] bytes)
+        {
+            NetworkStream stream = socket.GetStream();
+            stream.Read(bytes, 0, socket.ReceiveBufferSize);
+        }
+
         private void HandleNewClient(TcpClient socket, int socketIdx)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
