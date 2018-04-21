@@ -262,11 +262,6 @@ namespace SmartHomeServer
             _WorkerThreads[_ThermometerIdx].Start();
         }
 
-        private void ProcessData(string data)
-        {
-
-        }
-
         private void ProcessThermometerData(string data)
         {
             int idx;
