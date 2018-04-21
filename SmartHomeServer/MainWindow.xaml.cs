@@ -162,6 +162,11 @@ namespace SmartHomeServer
 
         private void StopServer()
         {
+            for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
+            {
+                _ListenerThreads[idx].Abort();
+            }
+
             _NetworkListener.Stop();
         }
 
