@@ -248,7 +248,7 @@ namespace SmartHomeServer
 
             _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
             {
-                while (true)
+                while (_Sockets[_ThermometerIdx].Connected)
                 {
                     byte[] bytes = new byte[BUFFER_SIZE];
                     Receive(_Sockets[_ThermometerIdx], bytes);
