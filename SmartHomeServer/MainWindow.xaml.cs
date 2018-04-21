@@ -243,5 +243,43 @@ namespace SmartHomeServer
         {
 
         }
+
+        private void ProcessThermometerData(string data)
+        {
+            int idx;
+            if ((idx = data.IndexOf(NETWORK_UPDATE_INTERVAL_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_UPDATE_INTERVAL_ARG.Length, endIdx = data.IndexOf(";");
+                    int updateInterval = int.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        UpdateIntervalTextBlock.Text = updateInterval.ToString();
+
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL +
+                            string.Format("Received update interval: {0}", updateInterval) + "\n");
+                        LogTextBlock.ScrollToEnd();
+                    });
+                }
+                catch (FormatException)
+                {
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Received incorrect update interval" + "\n");
+                        LogTextBlock.ScrollToEnd();
+                    });
+                }
+            }
+            else
+            {
+                Dispatcher.Invoke(delegate ()
+                {
+                    LogTextBlock.AppendText(string.Format(NETWORK_LOG_LABEL + "Received unknown data: \"{0}\"" + "\n", data));
+                    LogTextBlock.ScrollToEnd();
+                });
+            }
+        }
     }
 }
