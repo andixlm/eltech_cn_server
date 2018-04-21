@@ -60,6 +60,8 @@ namespace SmartHomeServer
 
         private Mutex _ListenerMutex;
 
+        private List<string> _ThermometerCache;
+
         private int _SocketsIdx;
         private int _ThermometerIdx;
 
@@ -84,6 +86,8 @@ namespace SmartHomeServer
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
+
+            _ThermometerCache = new List<string>();
         }
 
         private void Configure()
@@ -255,9 +259,7 @@ namespace SmartHomeServer
                     Receive(_Sockets[_ThermometerIdx], bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
-                    data = data.Substring(0, data.IndexOf(";") + 1);
-
-                    ProcessThermometerData(data);
+                    ProcessThermometerData(ProcessData(data, ref _ThermometerCache));
                 }
             }));
             _WorkerThreads[_ThermometerIdx].Start();
