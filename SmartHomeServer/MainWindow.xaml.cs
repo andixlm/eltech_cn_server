@@ -39,6 +39,7 @@ namespace SmartHomeServer
         private static readonly string UPDATE_INTERVAL_LOG_LABEL = "Update interval: ";
 
         private static readonly string NETWORK_LOG_LABEL = "Network: ";
+        private static readonly string NETWORK_DEVICE_THERMOMETER_LOG_LABEL = "Thermometer: ";
 
         private static readonly string NETWORK_DEVICE_ARG = "Device: ";
         private static readonly string NETWORK_DEVICE_THERMOMETER = "Thermometer";
@@ -286,6 +287,32 @@ namespace SmartHomeServer
                     Dispatcher.Invoke(delegate ()
                     {
                         LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Received incorrect update interval" + "\n");
+                        LogTextBlock.ScrollToEnd();
+                    });
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_TEMPERATURE_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(";");
+                    double temperature = double.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        TemperatureValueLabel.Content = temperature.ToString();
+
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                            string.Format("Received temperature: {0}", temperature.ToString("F2")) + "\n");
+                        LogTextBlock.ScrollToEnd();
+                    });
+                }
+                catch (FormatException)
+                {
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                            "Received incorrect temperature" + "\n");
                         LogTextBlock.ScrollToEnd();
                     });
                 }
