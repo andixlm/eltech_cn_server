@@ -277,7 +277,7 @@ namespace SmartHomeServer
                     {
                         UpdateIntervalTextBlock.Text = updateInterval.ToString();
 
-                        LogTextBlock.AppendText(NETWORK_LOG_LABEL +
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                             string.Format("Received update interval: {0}", updateInterval) + "\n");
                         LogTextBlock.ScrollToEnd();
                     });
@@ -286,7 +286,8 @@ namespace SmartHomeServer
                 {
                     Dispatcher.Invoke(delegate ()
                     {
-                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + "Received incorrect update interval" + "\n");
+                        LogTextBlock.AppendText(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                            "Received incorrect update interval" + "\n");
                         LogTextBlock.ScrollToEnd();
                     });
                 }
@@ -321,7 +322,8 @@ namespace SmartHomeServer
             {
                 Dispatcher.Invoke(delegate ()
                 {
-                    LogTextBlock.AppendText(string.Format(NETWORK_LOG_LABEL + "Received unknown data: \"{0}\"" + "\n", data));
+                    LogTextBlock.AppendText(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                        "Received unknown data: \"{0}\"" + "\n", data));
                     LogTextBlock.ScrollToEnd();
                 });
             }
