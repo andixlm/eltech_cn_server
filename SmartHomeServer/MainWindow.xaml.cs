@@ -369,5 +369,15 @@ namespace SmartHomeServer
 
             dataSet.Clear();
         }
+
+        private void MoveData(ref List<string> from, ref List<string> to)
+        {
+            foreach (string piece in from)
+            {
+                to.Add(piece);
+            }
+
+            from.Clear();
+        }
     }
 }
