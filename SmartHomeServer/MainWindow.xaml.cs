@@ -380,7 +380,7 @@ namespace SmartHomeServer
                 Dispatcher.Invoke(delegate ()
                 {
                     LogTextBlock.AppendText(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        "Received unknown data: \"{0}\"" + "\n", data));
+                        "Unknown data received: \"{0}\"" + "\n", data));
                     LogTextBlock.ScrollToEnd();
                 });
             }
