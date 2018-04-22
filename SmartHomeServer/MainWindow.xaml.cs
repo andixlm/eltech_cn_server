@@ -221,7 +221,7 @@ namespace SmartHomeServer
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
                     _ThermometerIdx = idx;
-                    ProcessData(data, ref _ThermometerCache);
+                    CacheData(data, ref _ThermometerCache);
                     HandleThermometer();
                 }
                 else /// TODO: Handle other devices.
@@ -260,14 +260,14 @@ namespace SmartHomeServer
                     Receive(_Sockets[_ThermometerIdx], bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
-                    ProcessThermometerData(ProcessData(data, ref _ThermometerCache));
+                    ProcessThermometerData(CacheData(data, ref _ThermometerCache));
                     ProcessThermometerData(ref _ThermometerCache);
                 }
             }));
             _WorkerThreads[_ThermometerIdx].Start();
         }
 
-        string ProcessData(string data, ref List<string> cache)
+        string CacheData(string data, ref List<string> cache)
         {
             int delimiterIdx = data.IndexOf(';');
             string first = data.Substring(0, delimiterIdx + 1);
