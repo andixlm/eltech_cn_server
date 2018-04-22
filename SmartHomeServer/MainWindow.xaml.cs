@@ -22,6 +22,8 @@ namespace SmartHomeServer
     {
         private static readonly int BUFFER_SIZE = 8192;
 
+        private static readonly char DELIMITER = ';';
+
         private static readonly string IPADDRESS_LOG_LABEL = "IP Address: ";
 
         private static readonly string LOCALHOST_IPADDRESS = "127.0.0.1";
@@ -201,7 +203,7 @@ namespace SmartHomeServer
 
             /// TODO: Parse, cache received data and process later.
             string data = Encoding.Unicode.GetString(bytes);
-            data = data.Substring(0, data.IndexOf(';') + 1);
+            data = data.Substring(0, data.IndexOf(DELIMITER) + 1);
 
             if (string.IsNullOrEmpty(data))
             {
@@ -216,7 +218,7 @@ namespace SmartHomeServer
             int idx;
             if ((idx = data.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
             {
-                int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = data.IndexOf(';');
+                int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                 string device = data.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
@@ -269,11 +271,11 @@ namespace SmartHomeServer
 
         string CacheData(string data, ref List<string> cache)
         {
-            int delimiterIdx = data.IndexOf(';');
+            int delimiterIdx = data.IndexOf(DELIMITER);
             string first = data.Substring(0, delimiterIdx + 1);
 
             data = data.Substring(delimiterIdx + 1, data.Length - delimiterIdx - 1);
-            for (delimiterIdx = data.IndexOf(';'); delimiterIdx >= 0; delimiterIdx = data.IndexOf(';'))
+            for (delimiterIdx = data.IndexOf(DELIMITER); delimiterIdx >= 0; delimiterIdx = data.IndexOf(DELIMITER))
             {
                 cache.Add(data.Substring(0, delimiterIdx + 1));
                 data = data.Substring(delimiterIdx + 1, data.Length - delimiterIdx - 1);
@@ -289,7 +291,7 @@ namespace SmartHomeServer
             {
                 try
                 {
-                    int startIdx = idx + NETWORK_UPDATE_INTERVAL_ARG.Length, endIdx = data.IndexOf(";");
+                    int startIdx = idx + NETWORK_UPDATE_INTERVAL_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     int updateInterval = int.Parse(data.Substring(startIdx, endIdx - startIdx));
 
                     Dispatcher.Invoke(delegate ()
@@ -315,7 +317,7 @@ namespace SmartHomeServer
             {
                 try
                 {
-                    int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(";");
+                    int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     double temperature = double.Parse(data.Substring(startIdx, endIdx - startIdx));
 
                     Dispatcher.Invoke(delegate ()
