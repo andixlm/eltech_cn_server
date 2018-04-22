@@ -267,12 +267,13 @@ namespace SmartHomeServer
             {
                 while (_Sockets[_ThermometerIdx].Connected)
                 {
+                    ProcessThermometerData(ref _ThermometerCache);
+
                     byte[] bytes = new byte[BUFFER_SIZE];
                     Receive(ref _Sockets[_ThermometerIdx], bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
                     ProcessThermometerData(CacheData(data, ref _ThermometerCache));
-                    ProcessThermometerData(ref _ThermometerCache);
                 }
             }));
             _WorkerThreads[_ThermometerIdx].Start();
