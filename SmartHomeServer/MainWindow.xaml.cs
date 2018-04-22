@@ -121,7 +121,7 @@ namespace SmartHomeServer
                         TcpClient socket = _NetworkListener.AcceptTcpClient();
 
                         _Sockets[_SocketsIdx] = socket;
-                        HandleNewClient(_Sockets[_SocketsIdx], _SocketsIdx);
+                        HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
 
                         _SocketsIdx++;
                         /// TODO: Check if more than three connections.
@@ -183,7 +183,7 @@ namespace SmartHomeServer
             _NetworkListener.Stop();
         }
 
-        private void Send(TcpClient socket, byte[] bytes)
+        private void Send(ref TcpClient socket, byte[] bytes)
         {
             _SocketsMutex.WaitOne();
 
@@ -194,7 +194,7 @@ namespace SmartHomeServer
             _SocketsMutex.ReleaseMutex();
         }
 
-        private void Receive(TcpClient socket, byte[] bytes)
+        private void Receive(ref TcpClient socket, byte[] bytes)
         {
             _SocketsMutex.WaitOne();
 
@@ -204,10 +204,10 @@ namespace SmartHomeServer
             _SocketsMutex.ReleaseMutex();
         }
 
-        private void HandleNewClient(TcpClient socket, int socketIdx)
+        private void HandleNewClient(ref TcpClient socket, int socketIdx)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
-            Receive(socket, bytes);
+            Receive(ref socket, bytes);
 
             /// TODO: Parse, cache received data and process later.
             string data = Encoding.Unicode.GetString(bytes);
@@ -267,7 +267,7 @@ namespace SmartHomeServer
                 while (_Sockets[_ThermometerIdx].Connected)
                 {
                     byte[] bytes = new byte[BUFFER_SIZE];
-                    Receive(_Sockets[_ThermometerIdx], bytes);
+                    Receive(ref _Sockets[_ThermometerIdx], bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
                     ProcessThermometerData(CacheData(data, ref _ThermometerCache));
