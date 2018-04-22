@@ -207,9 +207,7 @@ namespace SmartHomeServer
         private void HandleNewClient(TcpClient socket, int socketIdx)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
-
-            NetworkStream stream = socket.GetStream();
-            stream.Read(bytes, 0, socket.ReceiveBufferSize);
+            Receive(socket, bytes);
 
             /// TODO: Parse, cache received data and process later.
             string data = Encoding.Unicode.GetString(bytes);
