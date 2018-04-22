@@ -63,6 +63,7 @@ namespace SmartHomeServer
         private Mutex _ListenerMutex;
         private Mutex _SocketsMutex;
 
+        private List<string> _Cache;
         private List<string> _ThermometerCache;
 
         private int _SocketsIdx;
@@ -91,6 +92,7 @@ namespace SmartHomeServer
             _ListenerMutex = new Mutex();
             _SocketsMutex = new Mutex();
 
+            _Cache = new List<string>();
             _ThermometerCache = new List<string>();
         }
 
