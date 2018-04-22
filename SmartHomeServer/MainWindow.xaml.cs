@@ -211,10 +211,7 @@ namespace SmartHomeServer
             byte[] bytes = new byte[BUFFER_SIZE];
             Receive(ref socket, bytes);
 
-            /// TODO: Parse, cache received data and process later.
             string data = Encoding.Unicode.GetString(bytes);
-            data = data.Substring(0, data.IndexOf(DELIMITER) + 1);
-
             if (string.IsNullOrEmpty(data))
             {
                 Dispatcher.Invoke(delegate ()
@@ -225,15 +222,17 @@ namespace SmartHomeServer
                 return;
             }
 
+            string first = CacheData(data, ref _Cache);
+
             int idx;
-            if ((idx = data.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
+            if ((idx = first.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
             {
                 int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                 string device = data.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
                     _ThermometerIdx = idx;
-                    CacheData(data, ref _ThermometerCache);
+                    MoveData(ref _Cache, ref _ThermometerCache);
                     HandleThermometer();
                 }
                 else /// TODO: Handle other devices.
