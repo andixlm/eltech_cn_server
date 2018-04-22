@@ -239,8 +239,8 @@ namespace SmartHomeServer
             int idx;
             if ((idx = first.IndexOf(NETWORK_DEVICE_ARG)) >= 0)
             {
-                int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
-                string device = data.Substring(startIdx, endIdx - startIdx);
+                int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = first.IndexOf(DELIMITER);
+                string device = first.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
                     _ThermometerIdx = idx;
