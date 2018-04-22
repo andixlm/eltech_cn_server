@@ -61,6 +61,7 @@ namespace SmartHomeServer
         private TcpClient[] _Sockets;
 
         private Mutex _ListenerMutex;
+        private Mutex _SocketsMutex;
 
         private List<string> _ThermometerCache;
 
@@ -88,6 +89,7 @@ namespace SmartHomeServer
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
+            _SocketsMutex = new Mutex();
 
             _ThermometerCache = new List<string>();
         }
@@ -183,15 +185,23 @@ namespace SmartHomeServer
 
         private void Send(TcpClient socket, byte[] bytes)
         {
+            _SocketsMutex.WaitOne();
+
             NetworkStream stream = socket.GetStream();
             stream.Write(bytes, 0, bytes.Length);
             stream.Flush();
+
+            _SocketsMutex.ReleaseMutex();
         }
 
         private void Receive(TcpClient socket, byte[] bytes)
         {
+            _SocketsMutex.WaitOne();
+
             NetworkStream stream = socket.GetStream();
             stream.Read(bytes, 0, socket.ReceiveBufferSize);
+
+            _SocketsMutex.ReleaseMutex();
         }
 
         private void HandleNewClient(TcpClient socket, int socketIdx)
