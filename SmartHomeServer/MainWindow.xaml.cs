@@ -53,6 +53,8 @@ namespace SmartHomeServer
 
         private static readonly Random sRandom = new Random();
 
+        private bool _ShouldScrollToEnd;
+
         private TcpListener _NetworkListener;
 
         private Thread[] _ListenerThreads;
@@ -82,6 +84,8 @@ namespace SmartHomeServer
 
         private void Init()
         {
+            _ShouldScrollToEnd = true;
+
             _NetworkListener = default(TcpListener);
 
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
@@ -405,6 +409,15 @@ namespace SmartHomeServer
             }
 
             from.Clear();
+        }
+
+        private void Log(string info)
+        {
+            Dispatcher.Invoke(delegate ()
+            {
+                LogTextBlock.AppendText(info);
+                if (_ShouldScrollToEnd) LogTextBlock.ScrollToEnd();
+            });
         }
     }
 }
