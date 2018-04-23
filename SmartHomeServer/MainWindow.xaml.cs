@@ -147,6 +147,25 @@ namespace SmartHomeServer
                     }
                 }));
             }
+
+            UpdateIntervalSetButton.Click += (sender, e) =>
+            {
+                try
+                {
+                    _ThermometerUpdateInterval = int.Parse(UpdateIntervalTextBlock.Text);
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                        UPDATE_INTERVAL_LOG_LABEL + string.Format("Set to {0}\n", _ThermometerUpdateInterval));
+
+                    if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
+                    {
+                        SendThermometerUpdateInterval(ref _Sockets[_ThermometerIdx], _ThermometerUpdateInterval);
+                    }
+                }
+                catch (FormatException exc)
+                {
+                    Log(UPDATE_INTERVAL_LOG_LABEL + exc.Message + "\n");
+                }
+            };
         }
 
         private void StartServer()
