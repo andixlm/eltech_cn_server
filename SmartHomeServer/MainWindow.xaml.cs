@@ -328,6 +328,11 @@ namespace SmartHomeServer
                     int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     double temperature = double.Parse(data.Substring(startIdx, endIdx - startIdx));
 
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        TemperatureValueLabel.Content = temperature.ToString("F2");
+                    });
+
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         string.Format("Received temperature: {0}", temperature.ToString("F2")) + "\n");
                 }
