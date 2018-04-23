@@ -185,7 +185,7 @@ namespace SmartHomeServer
             _NetworkListener.Stop();
         }
 
-        private void Send(ref TcpClient socket, byte[] bytes)
+        private void Send(ref TcpClient socket, ref byte[] bytes)
         {
             _SendMutex.WaitOne();
 
@@ -204,7 +204,7 @@ namespace SmartHomeServer
             _SendMutex.ReleaseMutex();
         }
 
-        private void Receive(ref TcpClient socket, byte[] bytes)
+        private void Receive(ref TcpClient socket, ref byte[] bytes)
         {
             _ReceiveMutex.WaitOne();
 
@@ -225,7 +225,7 @@ namespace SmartHomeServer
         private void HandleNewClient(ref TcpClient socket, int socketIdx)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
-            Receive(ref socket, bytes);
+            Receive(ref socket, ref bytes);
 
             string data = Encoding.Unicode.GetString(bytes);
             if (string.IsNullOrEmpty(data))
@@ -273,7 +273,7 @@ namespace SmartHomeServer
                     ProcessThermometerData(ref _ThermometerCache);
 
                     byte[] bytes = new byte[BUFFER_SIZE];
-                    Receive(ref _Sockets[_ThermometerIdx], bytes);
+                    Receive(ref _Sockets[_ThermometerIdx], ref bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
                     if (!string.IsNullOrEmpty(data))
