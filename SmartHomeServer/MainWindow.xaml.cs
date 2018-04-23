@@ -355,6 +355,18 @@ namespace SmartHomeServer
             dataSet.Clear();
         }
 
+        private void AdjustThermometerBlock(bool isConnected)
+        {
+            Dispatcher.Invoke(delegate ()
+            {
+                ThermometerConnectionValueLabel.Content = isConnected ? CONNECTION_UP
+                                                                      : CONNECTION_DOWN;
+
+                UpdateIntervalSetButton.IsEnabled = isConnected;
+                TemperatureUpdateButton.IsEnabled = isConnected;
+            });
+        }
+
         private void MoveData(ref List<string> from, ref List<string> to)
         {
             foreach (string piece in from)
