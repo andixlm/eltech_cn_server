@@ -359,6 +359,15 @@ namespace SmartHomeServer
             dataSet.Clear();
         }
 
+        private void SendThermometerUpdateInterval(ref TcpClient socket, double updateInterval)
+        {
+            byte[] bytes = Encoding.Unicode.GetBytes(string.Format(NETWORK_UPDATE_INTERVAL_ARG + "{0}" + DELIMITER, updateInterval));
+
+            Send(ref socket, ref bytes);
+
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + "\n");
+        }
+
         private void AdjustThermometerBlock(bool isConnected)
         {
             Dispatcher.Invoke(delegate ()
