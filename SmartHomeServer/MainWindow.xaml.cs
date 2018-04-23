@@ -72,6 +72,8 @@ namespace SmartHomeServer
         private int _SocketsIdx;
         private int _ThermometerIdx;
 
+        private int _ThermometerUpdateInterval;
+
         private int _Port;
 
         public MainWindow()
@@ -100,6 +102,8 @@ namespace SmartHomeServer
 
             _Cache = new List<string>();
             _ThermometerCache = new List<string>();
+
+            _ThermometerUpdateInterval = 1;
         }
 
         private void Configure()
