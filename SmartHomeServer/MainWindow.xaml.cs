@@ -47,6 +47,9 @@ namespace SmartHomeServer
         private static readonly string NETWORK_DEVICE_THERMOMETER = "Thermometer";
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temperatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
+        private static readonly string NETWORK_METHOD_TO_INVOKE_ARG = "Method: ";
+
+        private static readonly string NETWORK_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
 
         private static readonly int MAXIMAL_CLIENTS_NUM_VALUE = 3;
         private static readonly int MAXIMAL_THREADS_NUM_VALUE = 3;
@@ -389,6 +392,15 @@ namespace SmartHomeServer
             Send(ref socket, ref bytes);
 
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + "\n");
+        }
+
+        private void SendThermometerMethodToInvoke(ref TcpClient socket, string method)
+        {
+            byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
+
+            Send(ref socket, ref bytes);
+
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + "\n");
         }
 
         private void AdjustThermometerBlock(bool isConnected)
