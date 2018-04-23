@@ -169,6 +169,14 @@ namespace SmartHomeServer
                     Log(UPDATE_INTERVAL_LOG_LABEL + exc.Message + "\n");
                 }
             };
+
+            TemperatureUpdateButton.Click += (sender, e) =>
+            {
+                if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
+                {
+                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
+                }
+            };
         }
 
         private void StartServer()
