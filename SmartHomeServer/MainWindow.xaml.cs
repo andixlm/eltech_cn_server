@@ -228,7 +228,7 @@ namespace SmartHomeServer
             Receive(ref socket, ref bytes);
 
             string data = Encoding.Unicode.GetString(bytes);
-            if (string.IsNullOrEmpty(data))
+            if (string.IsNullOrEmpty(data) && data.Equals(""))
             {
                 Log(NETWORK_LOG_LABEL + "Empty data received." + "\n");
                 return;
