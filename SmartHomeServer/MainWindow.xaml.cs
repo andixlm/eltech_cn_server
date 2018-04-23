@@ -310,6 +310,11 @@ namespace SmartHomeServer
 
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         string.Format("Received update interval: {0}", updateInterval) + "\n");
+
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        UpdateIntervalTextBlock.Text = updateInterval.ToString();
+                    });
                 }
                 catch (FormatException)
                 {
