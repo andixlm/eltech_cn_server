@@ -119,6 +119,8 @@ namespace SmartHomeServer
                 StopServer();
             };
 
+            AdjustThermometerBlock(false);
+
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
                 _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
@@ -260,10 +262,7 @@ namespace SmartHomeServer
 
         private void HandleThermometer()
         {
-            Dispatcher.Invoke(delegate ()
-            {
-                ThermometerConnectionValueLabel.Content = CONNECTION_UP;
-            });
+            AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + "\n");
 
             _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
