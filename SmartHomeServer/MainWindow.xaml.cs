@@ -276,7 +276,7 @@ namespace SmartHomeServer
                     Receive(ref _Sockets[_ThermometerIdx], ref bytes);
 
                     string data = Encoding.Unicode.GetString(bytes);
-                    if (!string.IsNullOrEmpty(data))
+                    if (!string.IsNullOrEmpty(data) && !data.Equals(""))
                         ProcessThermometerData(CacheData(data, ref _ThermometerCache));
                 }
             }));
@@ -344,7 +344,7 @@ namespace SmartHomeServer
         {
             foreach (string data in dataSet)
             {
-                ProcessThermometerData(data);
+                if (string.IsNullOrEmpty(data) && !data.Equals("")) ProcessThermometerData(data);
             }
 
             dataSet.Clear();
