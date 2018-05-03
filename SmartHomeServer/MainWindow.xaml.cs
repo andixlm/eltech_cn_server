@@ -111,6 +111,11 @@ namespace SmartHomeServer
 
         private void Configure()
         {
+            Closed += (sender, e) =>
+            {
+                StopServer();
+            };
+
             _Port = sRandom.Next(MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE);
             PortTextBox.Text = _Port.ToString();
 
@@ -143,6 +148,10 @@ namespace SmartHomeServer
                         _SocketsIdx++;
                         /// TODO: Check if more than three connections.
                         _ListenerMutex.ReleaseMutex();
+                    }
+                    catch (ThreadAbortException)
+                    {
+                        _ListenerMutex.Close();
                     }
                     catch (Exception exc)
                     {
@@ -215,9 +224,15 @@ namespace SmartHomeServer
         {
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
-                _ListenerThreads[idx].Abort();
+                if (_Sockets[idx] != null)
+                {
+                    _Sockets[idx].Close();
+                }
+                if (_ListenerThreads[idx].IsAlive)
+                {
+                    _ListenerThreads[idx].Interrupt();
+                }
             }
-
             _NetworkListener.Stop();
         }
 
