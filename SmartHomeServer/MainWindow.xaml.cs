@@ -154,7 +154,7 @@ namespace SmartHomeServer
                 }
                 catch (FormatException exc)
                 {
-                    Log(UPDATE_INTERVAL_LOG_LABEL + exc.Message + "\n");
+                    Log(UPDATE_INTERVAL_LOG_LABEL + exc.Message + '\n');
                 }
             };
 
@@ -202,7 +202,7 @@ namespace SmartHomeServer
                             }
                         });
 
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + "\n");
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                     }
                     catch (SocketException)
                     {
@@ -215,7 +215,7 @@ namespace SmartHomeServer
                             }
                         });
 
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + "\n");
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                     }
                     catch (Exception exc)
                     {
@@ -228,7 +228,7 @@ namespace SmartHomeServer
                             }
                         });
 
-                        Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + "\n");
+                        Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
                     }
                 }));
             }
@@ -257,11 +257,11 @@ namespace SmartHomeServer
 
                 ServerStatusLabel.Content = CONNECTION_UP;
                 SwitchButtonsOnConnectionStatusChanged(true);
-                Log(NETWORK_LOG_LABEL + "Server successfully started." + "\n");
+                Log(NETWORK_LOG_LABEL + "Server successfully started." + '\n');
             }
             catch (Exception exc)
             {
-                Log(NETWORK_LOG_LABEL + "Unable to start server: " + exc.Message + "\n");
+                Log(NETWORK_LOG_LABEL + "Unable to start server: " + exc.Message + '\n');
                 return;
             }
         }
@@ -287,7 +287,7 @@ namespace SmartHomeServer
             }
 
             SwitchButtonsOnConnectionStatusChanged(false);
-            Log(NETWORK_LOG_LABEL + "Server successfully stopped." + "\n");
+            Log(NETWORK_LOG_LABEL + "Server successfully stopped." + '\n');
         }
 
         private void Send(ref TcpClient socket, ref byte[] bytes)
@@ -307,7 +307,7 @@ namespace SmartHomeServer
             catch (System.IO.IOException exc)
             {
                 Log(NETWORK_LOG_LABEL +
-                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + "\n");
+                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
             }
 
             Dispatcher.Invoke(delegate ()
@@ -333,7 +333,7 @@ namespace SmartHomeServer
             catch (System.IO.IOException exc)
             {
                 Log(NETWORK_LOG_LABEL +
-                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + "\n");
+                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
             }
 
             Dispatcher.Invoke(delegate ()
@@ -351,7 +351,7 @@ namespace SmartHomeServer
             string data = Encoding.Unicode.GetString(bytes);
             if (string.IsNullOrEmpty(data) || data.Equals(""))
             {
-                Log(NETWORK_LOG_LABEL + "Empty data received." + "\n");
+                Log(NETWORK_LOG_LABEL + "Empty data received." + '\n');
                 return;
             }
 
@@ -370,19 +370,19 @@ namespace SmartHomeServer
                 }
                 else /// TODO: Handle other devices.
                 {
-                    Log(NETWORK_LOG_LABEL + "Unknown device tried to connect." + "\n");
+                    Log(NETWORK_LOG_LABEL + "Unknown device tried to connect." + '\n');
                 }
             }
             else
             {
-                Log(NETWORK_LOG_LABEL + "Unknown data received." + "\n");
+                Log(NETWORK_LOG_LABEL + "Unknown data received." + '\n');
             }
         }
 
         private void HandleThermometer()
         {
             AdjustThermometerBlock(true);
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + "\n");
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
             _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
             {
@@ -417,7 +417,7 @@ namespace SmartHomeServer
                         }
                     });
 
-                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + "\n");
+                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
                 }
             }));
             _WorkerThreads[_ThermometerIdx].Start();
@@ -454,7 +454,7 @@ namespace SmartHomeServer
                     int updateInterval = int.Parse(data.Substring(startIdx, endIdx - startIdx));
 
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        string.Format("Received update interval: {0}", updateInterval) + "\n");
+                        string.Format("Received update interval: {0}", updateInterval) + '\n');
 
                     Dispatcher.Invoke(delegate ()
                     {
@@ -464,7 +464,7 @@ namespace SmartHomeServer
                 catch (FormatException)
                 {
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        "Received incorrect update interval" + "\n");
+                        "Received incorrect update interval" + '\n');
                 }
             }
             else if ((idx = data.IndexOf(NETWORK_TEMPERATURE_ARG)) >= 0)
@@ -480,18 +480,18 @@ namespace SmartHomeServer
                     });
 
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        string.Format("Received temperature: {0}", temperature.ToString("F2")) + "\n");
+                        string.Format("Received temperature: {0}", temperature.ToString("F2")) + '\n');
                 }
                 catch (FormatException)
                 {
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        "Received incorrect temperature" + "\n");
+                        "Received incorrect temperature" + '\n');
                 }
             }
             else
             {
                 Log(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                    "Unknown data received: \"{0}\"" + "\n", data));
+                    "Unknown data received: \"{0}\"" + '\n', data));
             }
         }
 
@@ -511,7 +511,7 @@ namespace SmartHomeServer
 
             Send(ref socket, ref bytes);
 
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + "\n");
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + '\n');
         }
 
         private void SendThermometerMethodToInvoke(ref TcpClient socket, string method)
@@ -520,7 +520,7 @@ namespace SmartHomeServer
 
             Send(ref socket, ref bytes);
 
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + "\n");
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + '\n');
         }
 
         private void AdjustThermometerBlock(bool isConnected)
