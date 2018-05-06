@@ -145,8 +145,7 @@ namespace SmartHomeServer
                         _Sockets[_SocketsIdx] = socket;
                         HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
 
-                        _SocketsIdx++;
-                        /// TODO: Check if more than three connections.
+                        _SocketsIdx = (_SocketsIdx + 1) % MAXIMAL_THREADS_NUM_VALUE;
                         _ListenerMutex.ReleaseMutex();
                     }
                     catch (ThreadAbortException)
