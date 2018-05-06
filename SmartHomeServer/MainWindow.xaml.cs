@@ -150,7 +150,7 @@ namespace SmartHomeServer
                     }
                     catch (ThreadAbortException)
                     {
-                        _ListenerMutex.Close();
+                        _ListenerMutex.ReleaseMutex();
                     }
                     catch (Exception exc)
                     {
