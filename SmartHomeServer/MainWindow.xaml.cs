@@ -241,8 +241,6 @@ namespace SmartHomeServer
 
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
                 _NetworkListener.Start();
-                StartServerButton.IsEnabled = !StartServerButton.IsEnabled;
-                StopServerButton.IsEnabled = !StopServerButton.IsEnabled;
 
                 _SocketsIdx = 0;
                 ConfigureListenerThreads();
@@ -252,7 +250,7 @@ namespace SmartHomeServer
                 }
 
                 ServerStatusLabel.Content = CONNECTION_UP;
-
+                SwitchButtonsOnConnectionStatusChanged(true);
                 Log(NETWORK_LOG_LABEL + "Server successfully started." + "\n");
             }
             catch (Exception exc)
