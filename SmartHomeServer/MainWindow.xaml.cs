@@ -66,8 +66,11 @@ namespace SmartHomeServer
         private TcpClient[] _Sockets;
 
         private Mutex _ListenerMutex;
+        private bool _ListenerLocked;
         private Mutex _ReceiveMutex;
+        private bool _ReceiveLocked;
         private Mutex _SendMutex;
+        private bool _SendLocked;
 
         private List<string> _Cache;
         private List<string> _ThermometerCache;
@@ -100,8 +103,11 @@ namespace SmartHomeServer
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
+            _ListenerLocked = false;
             _ReceiveMutex = new Mutex();
+            _ReceiveLocked = false;
             _SendMutex = new Mutex();
+            _SendLocked = false;
 
             _Cache = new List<string>();
             _ThermometerCache = new List<string>();
@@ -278,7 +284,11 @@ namespace SmartHomeServer
 
         private void Send(ref TcpClient socket, ref byte[] bytes)
         {
-            _SendMutex.WaitOne();
+            Dispatcher.Invoke(delegate ()
+            {
+                _SendMutex.WaitOne();
+                _SendLocked = true;
+            });
 
             try
             {
@@ -292,12 +302,20 @@ namespace SmartHomeServer
                     (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + "\n");
             }
 
-            _SendMutex.ReleaseMutex();
+            Dispatcher.Invoke(delegate ()
+            {
+                _SendLocked = false;
+                _SendMutex.ReleaseMutex();
+            });
         }
 
         private void Receive(ref TcpClient socket, ref byte[] bytes)
         {
-            _ReceiveMutex.WaitOne();
+            Dispatcher.Invoke(delegate ()
+            {
+                _ReceiveMutex.WaitOne();
+                _ReceiveLocked = true;
+            });
 
             try
             {
@@ -310,7 +328,11 @@ namespace SmartHomeServer
                     (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + "\n");
             }
 
-            _ReceiveMutex.ReleaseMutex();
+            Dispatcher.Invoke(delegate ()
+            {
+                _ReceiveLocked = false;
+                _ReceiveMutex.ReleaseMutex();
+            });
         }
 
         private void HandleNewClient(ref TcpClient socket, int socketIdx)
