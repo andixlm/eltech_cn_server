@@ -229,7 +229,7 @@ namespace SmartHomeServer
                 }
                 if (_ListenerThreads[idx].IsAlive)
                 {
-                    _ListenerThreads[idx].Interrupt();
+                    _ListenerThreads[idx].Abort();
                 }
             }
             _NetworkListener.Stop();
