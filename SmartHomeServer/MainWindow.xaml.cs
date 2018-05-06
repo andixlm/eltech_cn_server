@@ -442,6 +442,15 @@ namespace SmartHomeServer
             });
         }
 
+        private void SwitchButtonsOnConnectionStatusChanged(bool isConnected)
+        {
+            Dispatcher.Invoke(delegate ()
+            {
+                StartServerButton.IsEnabled = !isConnected;
+                StopServerButton.IsEnabled = isConnected;
+            });
+        }
+
         private void MoveData(ref List<string> from, ref List<string> to)
         {
             foreach (string piece in from)
