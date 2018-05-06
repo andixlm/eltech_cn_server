@@ -268,18 +268,26 @@ namespace SmartHomeServer
 
         private void StopServer()
         {
+            _NetworkListener.Stop();
+
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
                 if (_Sockets[idx] != null)
                 {
                     _Sockets[idx].Close();
                 }
-                if (_ListenerThreads[idx].IsAlive)
+                if (_ListenerThreads[idx] != null && _ListenerThreads[idx].IsAlive)
                 {
                     _ListenerThreads[idx].Abort();
                 }
+                if (_WorkerThreads[idx] != null && _WorkerThreads[idx].IsAlive)
+                {
+                    _WorkerThreads[idx].Abort();
+                }
             }
-            _NetworkListener.Stop();
+
+            SwitchButtonsOnConnectionStatusChanged(false);
+            Log(NETWORK_LOG_LABEL + "Server successfully stopped." + "\n");
         }
 
         private void Send(ref TcpClient socket, ref byte[] bytes)
