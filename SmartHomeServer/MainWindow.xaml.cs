@@ -386,16 +386,38 @@ namespace SmartHomeServer
 
             _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
             {
-                while (_Sockets[_ThermometerIdx].Connected)
+                try
                 {
-                    ProcessThermometerData(ref _ThermometerCache);
+                    while (_Sockets[_ThermometerIdx].Connected)
+                    {
+                        ProcessThermometerData(ref _ThermometerCache);
 
-                    byte[] bytes = new byte[BUFFER_SIZE];
-                    Receive(ref _Sockets[_ThermometerIdx], ref bytes);
+                        byte[] bytes = new byte[BUFFER_SIZE];
+                        Receive(ref _Sockets[_ThermometerIdx], ref bytes);
 
-                    string data = Encoding.Unicode.GetString(bytes);
-                    if (!string.IsNullOrEmpty(data) && !data.Equals(""))
-                        ProcessThermometerData(CacheData(data, ref _ThermometerCache));
+                        string data = Encoding.Unicode.GetString(bytes);
+                        if (!string.IsNullOrEmpty(data) && !data.Equals(""))
+                            ProcessThermometerData(CacheData(data, ref _ThermometerCache));
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        if (_SendLocked)
+                        {
+                            _SendLocked = false;
+                            _SendMutex.ReleaseMutex();
+                        }
+
+                        if (_ReceiveLocked)
+                        {
+                            _ReceiveLocked = false;
+                            _ReceiveMutex.ReleaseMutex();
+                        }
+                    });
+
+                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + "\n");
                 }
             }));
             _WorkerThreads[_ThermometerIdx].Start();
