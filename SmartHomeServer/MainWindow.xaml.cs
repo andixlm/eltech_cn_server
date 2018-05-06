@@ -133,32 +133,6 @@ namespace SmartHomeServer
 
             AdjustThermometerBlock(false);
 
-            for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
-            {
-                _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
-                {
-                    try
-                    {
-                        _ListenerMutex.WaitOne();
-                        TcpClient socket = _NetworkListener.AcceptTcpClient();
-
-                        _Sockets[_SocketsIdx] = socket;
-                        HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
-
-                        _SocketsIdx = (_SocketsIdx + 1) % MAXIMAL_THREADS_NUM_VALUE;
-                        _ListenerMutex.ReleaseMutex();
-                    }
-                    catch (ThreadAbortException)
-                    {
-                        _ListenerMutex.ReleaseMutex();
-                    }
-                    catch (Exception exc)
-                    {
-                        Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + "\n");
-                    }
-                }));
-            }
-
             UpdateIntervalSetButton.Click += (sender, e) =>
             {
                 try
@@ -187,6 +161,73 @@ namespace SmartHomeServer
             };
         }
 
+        private void ConfigureListenerThreads()
+        {
+            for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
+            {
+                _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
+                {
+                    try
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            _ListenerMutex.WaitOne();
+                            _ListenerLocked = true;
+                        });
+
+                        _Sockets[_SocketsIdx] = _NetworkListener.AcceptTcpClient();
+                        HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
+                        _SocketsIdx = (_SocketsIdx + 1) % MAXIMAL_THREADS_NUM_VALUE;
+
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            _ListenerLocked = false;
+                            _ListenerMutex.ReleaseMutex();
+                        });
+                    }
+                    catch (ThreadAbortException)
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            if (_ListenerLocked)
+                            {
+                                _ListenerLocked = false;
+                                _ListenerMutex.ReleaseMutex();
+                            }
+                        });
+
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + "\n");
+                    }
+                    catch (SocketException)
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            if (_ListenerLocked)
+                            {
+                                _ListenerLocked = false;
+                                _ListenerMutex.ReleaseMutex();
+                            }
+                        });
+
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + "\n");
+                    }
+                    catch (Exception exc)
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            if (_ListenerLocked)
+                            {
+                                _ListenerLocked = false;
+                                _ListenerMutex.ReleaseMutex();
+                            }
+                        });
+
+                        Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + "\n");
+                    }
+                }));
+            }
+        }
+
         private void StartServer()
         {
             try
@@ -203,6 +244,8 @@ namespace SmartHomeServer
                 StartServerButton.IsEnabled = !StartServerButton.IsEnabled;
                 StopServerButton.IsEnabled = !StopServerButton.IsEnabled;
 
+                _SocketsIdx = 0;
+                ConfigureListenerThreads();
                 for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
                 {
                     _ListenerThreads[idx].Start();
