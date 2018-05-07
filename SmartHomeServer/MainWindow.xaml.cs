@@ -77,7 +77,7 @@ namespace SmartHomeServer
         private List<string> _ThermometerCache;
 
         private int _SocketsIdx;
-        private int _ThermometerIdx;
+        private int _ThermometerSocketIdx;
 
         private int _ThermometerUpdateInterval;
 
@@ -100,7 +100,7 @@ namespace SmartHomeServer
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             _WorkerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
 
-            _SocketsIdx = 0;
+            _ThermometerSocketIdx = 0;
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
@@ -148,9 +148,9 @@ namespace SmartHomeServer
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         UPDATE_INTERVAL_LOG_LABEL + string.Format("Set to {0}\n", _ThermometerUpdateInterval));
 
-                    if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
+                    if (_Sockets[_ThermometerSocketIdx] != null && _Sockets[_ThermometerSocketIdx].Connected)
                     {
-                        SendThermometerUpdateInterval(ref _Sockets[_ThermometerIdx], _ThermometerUpdateInterval);
+                        SendThermometerUpdateInterval(ref _Sockets[_ThermometerSocketIdx], _ThermometerUpdateInterval);
                     }
                 }
                 catch (FormatException exc)
@@ -161,9 +161,9 @@ namespace SmartHomeServer
 
             TemperatureUpdateButton.Click += (sender, e) =>
             {
-                if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
+                if (_Sockets[_ThermometerSocketIdx] != null && _Sockets[_ThermometerSocketIdx].Connected)
                 {
-                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
+                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerSocketIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
                 }
             };
         }
@@ -179,9 +179,10 @@ namespace SmartHomeServer
                         _ListenerMutex.WaitOne();
                         _ListenerLocked = true;
 
-                        _Sockets[_SocketsIdx] = _NetworkListener.AcceptTcpClient();
-                        HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
-                        _SocketsIdx = (_SocketsIdx + 1) % MAXIMAL_THREADS_NUM_VALUE;
+                        _NetworkListener.Start();
+                        TcpClient socket = _NetworkListener.AcceptTcpClient();
+                        _NetworkListener.Stop();
+                        HandleNewClient(ref socket);
 
                         _ListenerLocked = false;
                         _ListenerMutex.ReleaseMutex();
@@ -232,7 +233,6 @@ namespace SmartHomeServer
                 }
 
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
-                _NetworkListener.Start();
 
                 _SocketsIdx = 0;
                 ConfigureListenerThreads();
@@ -323,7 +323,7 @@ namespace SmartHomeServer
             });
         }
 
-        private void HandleNewClient(ref TcpClient socket, int socketIdx)
+        private void HandleNewClient(ref TcpClient socket)
         {
             byte[] bytes = new byte[BUFFER_SIZE];
             Receive(ref socket, ref bytes);
@@ -344,8 +344,8 @@ namespace SmartHomeServer
                 string device = first.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
-                    _ThermometerIdx = idx;
                     MoveData(ref _Cache, ref _ThermometerCache);
+                    _Sockets[_ThermometerSocketIdx] = socket;
                     HandleThermometer();
                 }
                 else /// TODO: Handle other devices.
@@ -364,16 +364,16 @@ namespace SmartHomeServer
             AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
-            _WorkerThreads[_ThermometerIdx] = new Thread(new ThreadStart(delegate ()
+            _WorkerThreads[_ThermometerSocketIdx] = new Thread(new ThreadStart(delegate ()
             {
                 try
                 {
-                    while (_Sockets[_ThermometerIdx].Connected)
+                    while (_Sockets[_ThermometerSocketIdx].Connected)
                     {
                         ProcessThermometerData(ref _ThermometerCache);
 
                         byte[] bytes = new byte[BUFFER_SIZE];
-                        Receive(ref _Sockets[_ThermometerIdx], ref bytes);
+                        Receive(ref _Sockets[_ThermometerSocketIdx], ref bytes);
 
                         string data = Encoding.Unicode.GetString(bytes);
                         if (!string.IsNullOrEmpty(data) && !data.Equals(""))
@@ -400,7 +400,7 @@ namespace SmartHomeServer
                     Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
                 }
             }));
-            _WorkerThreads[_ThermometerIdx].Start();
+            _WorkerThreads[_ThermometerSocketIdx].Start();
         }
 
         string CacheData(string data, ref List<string> cache)
@@ -517,19 +517,19 @@ namespace SmartHomeServer
         {
             AdjustThermometerBlock(false);
 
-            if (_Sockets[_ThermometerIdx] != null)
+            if (_Sockets[_ThermometerSocketIdx] != null)
             {
-                _Sockets[_ThermometerIdx].Close();
+                _Sockets[_ThermometerSocketIdx].Close();
             }
 
-            if (_ListenerThreads[_ThermometerIdx] != null && _ListenerThreads[_ThermometerIdx].IsAlive)
+            if (_ListenerThreads[_ThermometerSocketIdx] != null && _ListenerThreads[_ThermometerSocketIdx].IsAlive)
             {
-                _ListenerThreads[_ThermometerIdx].Abort();
+                _ListenerThreads[_ThermometerSocketIdx].Abort();
             }
 
-            if (_WorkerThreads[_ThermometerIdx] != null && _WorkerThreads[_ThermometerIdx].IsAlive)
+            if (_WorkerThreads[_ThermometerSocketIdx] != null && _WorkerThreads[_ThermometerSocketIdx].IsAlive)
             {
-                _WorkerThreads[_ThermometerIdx].Abort();
+                _WorkerThreads[_ThermometerSocketIdx].Abort();
             }
         }
 
