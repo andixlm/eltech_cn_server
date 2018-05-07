@@ -176,58 +176,43 @@ namespace SmartHomeServer
                 {
                     try
                     {
-                        Dispatcher.Invoke(delegate ()
-                        {
-                            _ListenerMutex.WaitOne();
-                            _ListenerLocked = true;
-                        });
+                        _ListenerMutex.WaitOne();
+                        _ListenerLocked = true;
 
                         _Sockets[_SocketsIdx] = _NetworkListener.AcceptTcpClient();
                         HandleNewClient(ref _Sockets[_SocketsIdx], _SocketsIdx);
                         _SocketsIdx = (_SocketsIdx + 1) % MAXIMAL_THREADS_NUM_VALUE;
 
-                        Dispatcher.Invoke(delegate ()
-                        {
-                            _ListenerLocked = false;
-                            _ListenerMutex.ReleaseMutex();
-                        });
+                        _ListenerLocked = false;
+                        _ListenerMutex.ReleaseMutex();
                     }
                     catch (ThreadAbortException)
                     {
-                        Dispatcher.Invoke(delegate ()
+                        if (_ListenerLocked)
                         {
-                            if (_ListenerLocked)
-                            {
-                                _ListenerLocked = false;
-                                _ListenerMutex.ReleaseMutex();
-                            }
-                        });
+                            _ListenerLocked = false;
+                            _ListenerMutex.ReleaseMutex();
+                        }
 
                         Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                     }
                     catch (SocketException)
                     {
-                        Dispatcher.Invoke(delegate ()
+                        if (_ListenerLocked)
                         {
-                            if (_ListenerLocked)
-                            {
-                                _ListenerLocked = false;
-                                _ListenerMutex.ReleaseMutex();
-                            }
-                        });
+                            _ListenerLocked = false;
+                            _ListenerMutex.ReleaseMutex();
+                        }
 
                         Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                     }
                     catch (Exception exc)
                     {
-                        Dispatcher.Invoke(delegate ()
+                        if (_ListenerLocked)
                         {
-                            if (_ListenerLocked)
-                            {
-                                _ListenerLocked = false;
-                                _ListenerMutex.ReleaseMutex();
-                            }
-                        });
+                            _ListenerLocked = false;
+                            _ListenerMutex.ReleaseMutex();
+                        }
 
                         Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
                     }
@@ -293,11 +278,8 @@ namespace SmartHomeServer
 
         private void Send(ref TcpClient socket, ref byte[] bytes)
         {
-            Dispatcher.Invoke(delegate ()
-            {
-                _SendMutex.WaitOne();
-                _SendLocked = true;
-            });
+            _SendMutex.WaitOne();
+            _SendLocked = true;
 
             try
             {
@@ -311,11 +293,8 @@ namespace SmartHomeServer
                     (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
             }
 
-            Dispatcher.Invoke(delegate ()
-            {
-                _SendLocked = false;
-                _SendMutex.ReleaseMutex();
-            });
+            _SendLocked = false;
+            _SendMutex.ReleaseMutex();
         }
 
         private void Receive(ref TcpClient socket, ref byte[] bytes)
