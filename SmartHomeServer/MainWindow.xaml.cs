@@ -50,6 +50,7 @@ namespace SmartHomeServer
         private static readonly string NETWORK_METHOD_TO_INVOKE_ARG = "Method: ";
 
         private static readonly string NETWORK_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
+        private static readonly string NETWORK_METHOD_TO_DISCONNECT = "DISCONNECT";
 
         private static readonly int MAXIMAL_CLIENTS_NUM_VALUE = 3;
         private static readonly int MAXIMAL_THREADS_NUM_VALUE = 3;
@@ -488,6 +489,16 @@ namespace SmartHomeServer
                         "Received incorrect temperature" + '\n');
                 }
             }
+            else if ((idx = data.IndexOf(NETWORK_METHOD_TO_INVOKE_ARG)) >= 0)
+            {
+                int startIdx = idx + NETWORK_METHOD_TO_INVOKE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                string method = data.Substring(startIdx, endIdx - startIdx);
+
+                if (!string.IsNullOrEmpty(method) && method.Equals(NETWORK_METHOD_TO_DISCONNECT))
+                {
+                    CloseThermometerConnection();
+                }
+            }
             else
             {
                 Log(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
@@ -521,6 +532,26 @@ namespace SmartHomeServer
             Send(ref socket, ref bytes);
 
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + '\n');
+        }
+
+        private void CloseThermometerConnection()
+        {
+            AdjustThermometerBlock(false);
+
+            if (_Sockets[_ThermometerIdx] != null)
+            {
+                _Sockets[_ThermometerIdx].Close();
+            }
+
+            if (_ListenerThreads[_ThermometerIdx] != null && _ListenerThreads[_ThermometerIdx].IsAlive)
+            {
+                _ListenerThreads[_ThermometerIdx].Abort();
+            }
+
+            if (_WorkerThreads[_ThermometerIdx] != null && _WorkerThreads[_ThermometerIdx].IsAlive)
+            {
+                _WorkerThreads[_ThermometerIdx].Abort();
+            }
         }
 
         private void AdjustThermometerBlock(bool isConnected)
