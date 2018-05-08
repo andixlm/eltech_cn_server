@@ -562,6 +562,10 @@ namespace SmartHomeServer
             {
                 _Sockets[_ThermometerIdx].Close();
             }
+
+            /// Recreate and run listener for the reason server hasn't been stopped.
+            _ListenerThreads[_ThermometerIdx] = ConfigureListenerThread();
+            _ListenerThreads[_ThermometerIdx].Start();
         }
 
         private void AdjustThermometerBlock(bool isConnected)
