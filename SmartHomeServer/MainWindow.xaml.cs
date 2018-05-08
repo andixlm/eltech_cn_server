@@ -76,7 +76,7 @@ namespace SmartHomeServer
         private List<string> _Cache;
         private List<string> _ThermometerCache;
 
-        private int _ThermometerSocketIdx;
+        private int _ThermometerIdx;
 
         private int _ThermometerUpdateInterval;
 
@@ -100,7 +100,7 @@ namespace SmartHomeServer
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             _WorkerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
 
-            _ThermometerSocketIdx = 0;
+            _ThermometerIdx = 1;
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
@@ -147,9 +147,9 @@ namespace SmartHomeServer
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         UPDATE_INTERVAL_LOG_LABEL + string.Format("Set to {0}\n", _ThermometerUpdateInterval));
 
-                    if (_Sockets[_ThermometerSocketIdx] != null && _Sockets[_ThermometerSocketIdx].Connected)
+                    if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                     {
-                        SendThermometerUpdateInterval(ref _Sockets[_ThermometerSocketIdx], _ThermometerUpdateInterval);
+                        SendThermometerUpdateInterval(ref _Sockets[_ThermometerIdx], _ThermometerUpdateInterval);
                     }
                 }
                 catch (FormatException exc)
@@ -160,9 +160,9 @@ namespace SmartHomeServer
 
             TemperatureUpdateButton.Click += (sender, e) =>
             {
-                if (_Sockets[_ThermometerSocketIdx] != null && _Sockets[_ThermometerSocketIdx].Connected)
+                if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                 {
-                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerSocketIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
+                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
                 }
             };
         }
@@ -247,7 +247,7 @@ namespace SmartHomeServer
 
         private void ConfigureThermometerListenerThread()
         {
-            _ListenerThreads[_ThermometerSocketIdx] = ConfigureListenerThread();
+            _ListenerThreads[_ThermometerIdx] = ConfigureListenerThread();
         }
 
         private Thread ConfigureThermometerWorkerThread()
@@ -256,12 +256,12 @@ namespace SmartHomeServer
             {
                 try
                 {
-                    while (_Sockets[_ThermometerSocketIdx].Connected)
+                    while (_Sockets[_ThermometerIdx].Connected)
                     {
                         ProcessThermometerData(ref _ThermometerCache);
 
                         byte[] bytes = new byte[BUFFER_SIZE];
-                        Receive(ref _Sockets[_ThermometerSocketIdx], ref bytes);
+                        Receive(ref _Sockets[_ThermometerIdx], ref bytes);
 
                         string data = Encoding.Unicode.GetString(bytes);
                         ProcessThermometerData(CacheData(data, ref _ThermometerCache));
@@ -418,7 +418,7 @@ namespace SmartHomeServer
                 string device = first.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
-                    _Sockets[_ThermometerSocketIdx] = socket;
+                    _Sockets[_ThermometerIdx] = socket;
                     MoveData(ref _Cache, ref _ThermometerCache);
                     HandleThermometer();
                 }
@@ -438,8 +438,8 @@ namespace SmartHomeServer
             AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
-            _WorkerThreads[_ThermometerSocketIdx] = ConfigureThermometerWorkerThread();
-            _WorkerThreads[_ThermometerSocketIdx].Start();
+            _WorkerThreads[_ThermometerIdx] = ConfigureThermometerWorkerThread();
+            _WorkerThreads[_ThermometerIdx].Start();
         }
 
         string CacheData(string data, ref List<string> cache)
@@ -552,17 +552,17 @@ namespace SmartHomeServer
         {
             AdjustThermometerBlock(false);
 
-            if (_WorkerThreads[_ThermometerSocketIdx] != null && _WorkerThreads[_ThermometerSocketIdx].IsAlive)
+            if (_WorkerThreads[_ThermometerIdx] != null && _WorkerThreads[_ThermometerIdx].IsAlive)
             {
-                _WorkerThreads[_ThermometerSocketIdx].Abort();
+                _WorkerThreads[_ThermometerIdx].Abort();
             }
-            if (_ListenerThreads[_ThermometerSocketIdx] != null && _ListenerThreads[_ThermometerSocketIdx].IsAlive)
+            if (_ListenerThreads[_ThermometerIdx] != null && _ListenerThreads[_ThermometerIdx].IsAlive)
             {
-                _ListenerThreads[_ThermometerSocketIdx].Abort();
+                _ListenerThreads[_ThermometerIdx].Abort();
             }
-            if (_Sockets[_ThermometerSocketIdx] != null)
+            if (_Sockets[_ThermometerIdx] != null)
             {
-                _Sockets[_ThermometerSocketIdx].Close();
+                _Sockets[_ThermometerIdx].Close();
             }
         }
 
