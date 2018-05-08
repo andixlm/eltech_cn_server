@@ -70,17 +70,16 @@ namespace SmartHomeServer
         private Mutex _ListenerMutex;
         private Mutex _ReceiveMutex;
         private Mutex _SendMutex;
-
         private Mutex _DataMutex;
 
         private List<string> _Cache;
         private List<string> _ThermometerCache;
 
+        private int _ThermometerUpdateInterval;
+
         private int _LightSwitcherIdx;
         private int _ThermometerIdx;
         private int _MotionDetectorIdx;
-
-        private int _ThermometerUpdateInterval;
 
         private int _Port;
 
@@ -102,22 +101,21 @@ namespace SmartHomeServer
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             _WorkerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
 
-            _LightSwitcherIdx = 0;
-            _ThermometerIdx = 1;
-            _MotionDetectorIdx = 2;
-
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
             _ReceiveMutex = new Mutex();
             _SendMutex = new Mutex();
-
             _DataMutex = new Mutex();
 
             _Cache = new List<string>();
             _ThermometerCache = new List<string>();
 
             _ThermometerUpdateInterval = 1;
+
+            _LightSwitcherIdx = 0;
+            _ThermometerIdx = 1;
+            _MotionDetectorIdx = 2;
         }
 
         private void Configure()
