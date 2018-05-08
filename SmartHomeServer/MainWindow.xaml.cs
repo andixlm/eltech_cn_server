@@ -48,12 +48,17 @@ namespace SmartHomeServer
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temperatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
         private static readonly string NETWORK_METHOD_TO_INVOKE_ARG = "Method: ";
+        private static readonly string NETWORK_STATUS_ARG = "Status: ";
 
         private static readonly string NETWORK_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
         private static readonly string NETWORK_METHOD_TO_DISCONNECT = "DISCONNECT";
+        private static readonly string NETWORK_METHOD_TO_REQUEST_STATUS = "REQUEST_STATUS";
 
         private static readonly int MAXIMAL_CLIENTS_NUM_VALUE = 3;
         private static readonly int MAXIMAL_THREADS_NUM_VALUE = 3;
+
+        private static readonly int DEVICE_STATUS_UP = 42;
+        private static readonly int DEVICE_STATUS_CHECK_TIMEOUT = 3000;
 
         private static readonly Random sRandom = new Random();
 
@@ -64,6 +69,7 @@ namespace SmartHomeServer
 
         private Thread[] _ListenerThreads;
         private Thread[] _WorkerThreads;
+        private Thread[] _StatusThreads;
 
         private TcpClient[] _Sockets;
 
@@ -100,6 +106,7 @@ namespace SmartHomeServer
 
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
             _WorkerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
+            _StatusThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
 
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
@@ -299,6 +306,42 @@ namespace SmartHomeServer
             }));
         }
 
+        private Thread ConfigureThermometerStatusThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
+                    {
+                        SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status was requested." + '\n');
+
+                        Thread.Sleep(DEVICE_STATUS_CHECK_TIMEOUT);
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status thread was terminated." + '\n');
+                    }
+                }
+            }));
+        }
+
         private void StartServer()
         {
             try
@@ -436,6 +479,9 @@ namespace SmartHomeServer
             AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
+            _StatusThreads[_ThermometerIdx] = ConfigureThermometerStatusThread();
+            _StatusThreads[_ThermometerIdx].Start();
+
             _WorkerThreads[_ThermometerIdx] = ConfigureThermometerWorkerThread();
             _WorkerThreads[_ThermometerIdx].Start();
         }
@@ -501,6 +547,36 @@ namespace SmartHomeServer
                 {
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         "Received incorrect temperature" + '\n');
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_STATUS_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    int status = int.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    if (status == DEVICE_STATUS_UP)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Device is up." + '\n');
+                        }
+                    }
+                    else
+                    {
+                        CloseThermometerConnection();
+
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Device sent bad status, connection's closed." + '\n');
+                        }
+                    }
+                }
+                catch (FormatException)
+                {
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                        "Received incorrect device status" + '\n');
                 }
             }
             else if ((idx = data.IndexOf(NETWORK_METHOD_TO_INVOKE_ARG)) >= 0)
