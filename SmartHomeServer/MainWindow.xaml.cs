@@ -67,11 +67,8 @@ namespace SmartHomeServer
         private TcpClient[] _Sockets;
 
         private Mutex _ListenerMutex;
-        private bool _ListenerLocked;
         private Mutex _ReceiveMutex;
-        private bool _ReceiveLocked;
         private Mutex _SendMutex;
-        private bool _SendLocked;
 
         private List<string> _Cache;
         private List<string> _ThermometerCache;
@@ -104,11 +101,8 @@ namespace SmartHomeServer
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
-            _ListenerLocked = false;
             _ReceiveMutex = new Mutex();
-            _ReceiveLocked = false;
             _SendMutex = new Mutex();
-            _SendLocked = false;
 
             _Cache = new List<string>();
             _ThermometerCache = new List<string>();
@@ -177,42 +171,47 @@ namespace SmartHomeServer
                     try
                     {
                         _ListenerMutex.WaitOne();
-                        _ListenerLocked = true;
 
                         _NetworkListener.Start();
                         TcpClient socket = _NetworkListener.AcceptTcpClient();
                         _NetworkListener.Stop();
                         HandleNewClient(ref socket);
 
-                        _ListenerLocked = false;
                         _ListenerMutex.ReleaseMutex();
                     }
                     catch (ThreadAbortException)
                     {
-                        if (_ListenerLocked)
+                        try
                         {
-                            _ListenerLocked = false;
                             _ListenerMutex.ReleaseMutex();
+                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                         }
-
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        catch (ApplicationException)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
                     catch (SocketException)
                     {
-                        if (_ListenerLocked)
+                        try
                         {
-                            _ListenerLocked = false;
                             _ListenerMutex.ReleaseMutex();
+                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
                         }
-
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        catch (ApplicationException)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
                     catch (Exception exc)
                     {
-                        if (_ListenerLocked)
+                        try
                         {
-                            _ListenerLocked = false;
                             _ListenerMutex.ReleaseMutex();
+                        }
+                        catch (ApplicationException)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
                         }
 
                         Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
@@ -279,7 +278,6 @@ namespace SmartHomeServer
         private void Send(ref TcpClient socket, ref byte[] bytes)
         {
             _SendMutex.WaitOne();
-            _SendLocked = true;
 
             try
             {
@@ -293,17 +291,12 @@ namespace SmartHomeServer
                     (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
             }
 
-            _SendLocked = false;
             _SendMutex.ReleaseMutex();
         }
 
         private void Receive(ref TcpClient socket, ref byte[] bytes)
         {
-            Dispatcher.Invoke(delegate ()
-            {
-                _ReceiveMutex.WaitOne();
-                _ReceiveLocked = true;
-            });
+            _ReceiveMutex.WaitOne();
 
             try
             {
@@ -316,11 +309,7 @@ namespace SmartHomeServer
                     (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
             }
 
-            Dispatcher.Invoke(delegate ()
-            {
-                _ReceiveLocked = false;
-                _ReceiveMutex.ReleaseMutex();
-            });
+            _ReceiveMutex.ReleaseMutex();
         }
 
         private void HandleNewClient(ref TcpClient socket)
@@ -382,20 +371,23 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    Dispatcher.Invoke(delegate ()
+                    try
                     {
-                        if (_SendLocked)
-                        {
-                            _SendLocked = false;
-                            _SendMutex.ReleaseMutex();
-                        }
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
 
-                        if (_ReceiveLocked)
-                        {
-                            _ReceiveLocked = false;
-                            _ReceiveMutex.ReleaseMutex();
-                        }
-                    });
+                    try
+                    {
+                        _ReceiveMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
 
                     Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
                 }
