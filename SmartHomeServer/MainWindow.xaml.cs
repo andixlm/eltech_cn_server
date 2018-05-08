@@ -695,10 +695,7 @@ namespace SmartHomeServer
             }
             catch (TaskCanceledException)
             {
-                if (_VerboseLogging)
-                {
-                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "TaskCancelledException while Log's being executed" + '\n');
-                }
+                return;
             }
         }
     }
