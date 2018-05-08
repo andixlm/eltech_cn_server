@@ -543,7 +543,8 @@ namespace SmartHomeServer
             byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
             Send(ref socket, ref bytes);
 
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + '\n');
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                "Method to invoke: " + method + '.' + '\n');
         }
 
         private void CloseThermometerConnection()
