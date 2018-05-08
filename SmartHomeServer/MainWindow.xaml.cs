@@ -220,6 +220,49 @@ namespace SmartHomeServer
             }
         }
 
+        private Thread ConfigureThermometerWorkerThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_ThermometerSocketIdx].Connected)
+                    {
+                        ProcessThermometerData(ref _ThermometerCache);
+
+                        byte[] bytes = new byte[BUFFER_SIZE];
+                        Receive(ref _Sockets[_ThermometerSocketIdx], ref bytes);
+
+                        string data = Encoding.Unicode.GetString(bytes);
+                        if (!string.IsNullOrEmpty(data) && !data.Equals(""))
+                            ProcessThermometerData(CacheData(data, ref _ThermometerCache));
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+
+                    try
+                    {
+                        _ReceiveMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+
+                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
+                }
+            }));
+        }
+
         private void StartServer()
         {
             try
@@ -353,45 +396,7 @@ namespace SmartHomeServer
             AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
-            _WorkerThreads[_ThermometerSocketIdx] = new Thread(new ThreadStart(delegate ()
-            {
-                try
-                {
-                    while (_Sockets[_ThermometerSocketIdx].Connected)
-                    {
-                        ProcessThermometerData(ref _ThermometerCache);
-
-                        byte[] bytes = new byte[BUFFER_SIZE];
-                        Receive(ref _Sockets[_ThermometerSocketIdx], ref bytes);
-
-                        string data = Encoding.Unicode.GetString(bytes);
-                        if (!string.IsNullOrEmpty(data) && !data.Equals(""))
-                            ProcessThermometerData(CacheData(data, ref _ThermometerCache));
-                    }
-                }
-                catch (ThreadAbortException)
-                {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                    }
-
-                    try
-                    {
-                        _ReceiveMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                    }
-
-                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
-                }
-            }));
+            _WorkerThreads[_ThermometerSocketIdx] = ConfigureThermometerWorkerThread();
             _WorkerThreads[_ThermometerSocketIdx].Start();
         }
 
