@@ -57,6 +57,7 @@ namespace SmartHomeServer
 
         private static readonly Random sRandom = new Random();
 
+        private bool _VerboseLogging;
         private bool _ShouldScrollToEnd;
 
         private TcpListener _NetworkListener;
@@ -91,6 +92,7 @@ namespace SmartHomeServer
 
         private void Init()
         {
+            _VerboseLogging = false;
             _ShouldScrollToEnd = true;
 
             _NetworkListener = default(TcpListener);
@@ -185,11 +187,17 @@ namespace SmartHomeServer
                     try
                     {
                         _ListenerMutex.ReleaseMutex();
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        }
                     }
                     catch (ApplicationException)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
                 }
                 catch (SocketException)
@@ -197,11 +205,17 @@ namespace SmartHomeServer
                     try
                     {
                         _ListenerMutex.ReleaseMutex();
-                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                        }
                     }
                     catch (ApplicationException)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
                 }
                 catch (Exception exc)
@@ -212,7 +226,10 @@ namespace SmartHomeServer
                     }
                     catch (ApplicationException)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
 
                     Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
@@ -258,7 +275,10 @@ namespace SmartHomeServer
                     }
                     catch (ApplicationException)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
 
                     try
@@ -267,10 +287,16 @@ namespace SmartHomeServer
                     }
                     catch (ApplicationException)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
                     }
 
-                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
+                    }
                 }
             }));
         }
@@ -340,8 +366,11 @@ namespace SmartHomeServer
             }
             catch (System.IO.IOException exc)
             {
-                Log(NETWORK_LOG_LABEL +
-                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
+                if (_VerboseLogging)
+                {
+                    Log(NETWORK_LOG_LABEL +
+                        (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
+                }
             }
 
             _SendMutex.ReleaseMutex();
@@ -358,8 +387,11 @@ namespace SmartHomeServer
             }
             catch (System.IO.IOException exc)
             {
-                Log(NETWORK_LOG_LABEL +
-                    (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
+                if (_VerboseLogging)
+                {
+                    Log(NETWORK_LOG_LABEL +
+                        (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
+                }
             }
 
             _ReceiveMutex.ReleaseMutex();
@@ -584,7 +616,10 @@ namespace SmartHomeServer
             }
             catch (TaskCanceledException)
             {
-                Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "TaskCancelledException while Log's being executed" + '\n');
+                if (_VerboseLogging)
+                {
+                    Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "TaskCancelledException while Log's being executed" + '\n');
+                }
             }
         }
     }
