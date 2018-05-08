@@ -315,7 +315,10 @@ namespace SmartHomeServer
                     while (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                     {
                         SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
-                        Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status was requested." + '\n');
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status was requested." + '\n');
+                        }
 
                         Thread.Sleep(DEVICE_STATUS_CHECK_TIMEOUT);
                     }
@@ -619,8 +622,11 @@ namespace SmartHomeServer
             byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
             Send(ref socket, ref bytes);
 
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                "Method to invoke: " + method + '.' + '\n');
+            if (_VerboseLogging)
+            {
+                Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                    "Method to invoke: " + method + '.' + '\n');
+            }
         }
 
         private void CloseThermometerConnection()
