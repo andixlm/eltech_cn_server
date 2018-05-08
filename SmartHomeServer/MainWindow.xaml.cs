@@ -70,6 +70,8 @@ namespace SmartHomeServer
         private Mutex _ReceiveMutex;
         private Mutex _SendMutex;
 
+        private Mutex _DataMutex;
+
         private List<string> _Cache;
         private List<string> _ThermometerCache;
 
@@ -102,6 +104,8 @@ namespace SmartHomeServer
             _ListenerMutex = new Mutex();
             _ReceiveMutex = new Mutex();
             _SendMutex = new Mutex();
+
+            _DataMutex = new Mutex();
 
             _Cache = new List<string>();
             _ThermometerCache = new List<string>();
@@ -553,12 +557,16 @@ namespace SmartHomeServer
 
         private void MoveData(ref List<string> from, ref List<string> to)
         {
+            _DataMutex.WaitOne();
+
             foreach (string piece in from)
             {
                 to.Add(piece);
             }
 
             from.Clear();
+
+            _DataMutex.ReleaseMutex();
         }
 
         private void Log(string info)
