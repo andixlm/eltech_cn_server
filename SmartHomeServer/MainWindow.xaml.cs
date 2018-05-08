@@ -406,6 +406,8 @@ namespace SmartHomeServer
             }
             catch (System.IO.IOException exc)
             {
+                CloseSocket(ref socket);
+
                 if (_VerboseLogging)
                 {
                     Log(NETWORK_LOG_LABEL +
@@ -427,6 +429,8 @@ namespace SmartHomeServer
             }
             catch (System.IO.IOException exc)
             {
+                CloseSocket(ref socket);
+
                 if (_VerboseLogging)
                 {
                     Log(NETWORK_LOG_LABEL +
