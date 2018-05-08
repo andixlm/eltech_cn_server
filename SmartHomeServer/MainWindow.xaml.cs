@@ -73,7 +73,6 @@ namespace SmartHomeServer
         private List<string> _Cache;
         private List<string> _ThermometerCache;
 
-        private int _SocketsIdx;
         private int _ThermometerSocketIdx;
 
         private int _ThermometerUpdateInterval;
@@ -285,7 +284,6 @@ namespace SmartHomeServer
 
                 _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
 
-                _SocketsIdx = 0;
                 ConfigureListenerThreads();
                 for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
                 {
