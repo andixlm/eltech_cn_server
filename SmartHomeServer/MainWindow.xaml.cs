@@ -668,6 +668,31 @@ namespace SmartHomeServer
             });
         }
 
+        private void CloseSocket(ref TcpClient socket)
+        {
+            for (int idx = 0; idx < MAXIMAL_CLIENTS_NUM_VALUE; ++idx)
+            {
+                if (_Sockets[idx] == socket)
+                {
+                    switch (idx)
+                    {
+                        case _LightSwitcherIdx:
+                            break;
+
+                        case _ThermometerIdx:
+                            CloseThermometerConnection();
+                            break;
+
+                        case _MotionDetectorIdx:
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
         private void MoveData(ref List<string> from, ref List<string> to)
         {
             _DataMutex.WaitOne();
