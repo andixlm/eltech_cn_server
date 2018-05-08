@@ -244,8 +244,7 @@ namespace SmartHomeServer
                         Receive(ref _Sockets[_ThermometerSocketIdx], ref bytes);
 
                         string data = Encoding.Unicode.GetString(bytes);
-                        if (!string.IsNullOrEmpty(data) && !data.Equals(""))
-                            ProcessThermometerData(CacheData(data, ref _ThermometerCache));
+                        ProcessThermometerData(CacheData(data, ref _ThermometerCache));
                     }
                 }
                 catch (ThreadAbortException)
