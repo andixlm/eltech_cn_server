@@ -83,9 +83,9 @@ namespace SmartHomeServer
 
         private int _ThermometerUpdateInterval;
 
-        private int _LightSwitcherIdx;
-        private int _ThermometerIdx;
-        private int _MotionDetectorIdx;
+        private const int _LightSwitcherIdx = 0;
+        private const int _ThermometerIdx = 1;
+        private const int _MotionDetectorIdx = 2;
 
         private int _Port;
 
@@ -119,10 +119,6 @@ namespace SmartHomeServer
             _ThermometerCache = new List<string>();
 
             _ThermometerUpdateInterval = 1;
-
-            _LightSwitcherIdx = 0;
-            _ThermometerIdx = 1;
-            _MotionDetectorIdx = 2;
         }
 
         private void Configure()
