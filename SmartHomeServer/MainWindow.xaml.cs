@@ -649,6 +649,8 @@ namespace SmartHomeServer
             /// Recreate and run listener for the reason server hasn't been stopped.
             _ListenerThreads[_ThermometerIdx] = ConfigureListenerThread();
             _ListenerThreads[_ThermometerIdx].Start();
+
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Disconnected." + '\n');
         }
 
         private void AdjustThermometerBlock(bool isConnected)
@@ -685,6 +687,7 @@ namespace SmartHomeServer
 
                         case _ThermometerIdx:
                             CloseThermometerConnection();
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer doesn't respond." + '\n');
                             break;
 
                         case _MotionDetectorIdx:
