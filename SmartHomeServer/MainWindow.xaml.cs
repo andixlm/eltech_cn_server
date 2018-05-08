@@ -482,11 +482,11 @@ namespace SmartHomeServer
             AdjustThermometerBlock(true);
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
 
-            _StatusThreads[_ThermometerIdx] = ConfigureThermometerStatusThread();
-            _StatusThreads[_ThermometerIdx].Start();
-
             _WorkerThreads[_ThermometerIdx] = ConfigureThermometerWorkerThread();
             _WorkerThreads[_ThermometerIdx].Start();
+
+            _StatusThreads[_ThermometerIdx] = ConfigureThermometerStatusThread();
+            _StatusThreads[_ThermometerIdx].Start();
         }
 
         string CacheData(string data, ref List<string> cache)
