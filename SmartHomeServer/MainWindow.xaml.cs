@@ -490,10 +490,7 @@ namespace SmartHomeServer
         {
             foreach (string data in dataSet)
             {
-                if (string.IsNullOrEmpty(data) && !data.Equals(""))
-                {
-                    ProcessThermometerData(data);
-                }
+                ProcessThermometerData(data);
             }
 
             dataSet.Clear();
