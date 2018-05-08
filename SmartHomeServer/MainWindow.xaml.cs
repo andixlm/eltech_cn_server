@@ -297,7 +297,6 @@ namespace SmartHomeServer
             catch (Exception exc)
             {
                 Log(NETWORK_LOG_LABEL + "Unable to start server: " + exc.Message + '\n');
-                return;
             }
         }
 
@@ -307,17 +306,17 @@ namespace SmartHomeServer
 
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
-                if (_Sockets[idx] != null)
+                if (_WorkerThreads[idx] != null && _WorkerThreads[idx].IsAlive)
                 {
-                    _Sockets[idx].Close();
+                    _WorkerThreads[idx].Abort();
                 }
                 if (_ListenerThreads[idx] != null && _ListenerThreads[idx].IsAlive)
                 {
                     _ListenerThreads[idx].Abort();
                 }
-                if (_WorkerThreads[idx] != null && _WorkerThreads[idx].IsAlive)
+                if (_Sockets[idx] != null)
                 {
-                    _WorkerThreads[idx].Abort();
+                    _Sockets[idx].Close();
                 }
             }
 
@@ -383,8 +382,8 @@ namespace SmartHomeServer
                 string device = first.Substring(startIdx, endIdx - startIdx);
                 if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
-                    MoveData(ref _Cache, ref _ThermometerCache);
                     _Sockets[_ThermometerSocketIdx] = socket;
+                    MoveData(ref _Cache, ref _ThermometerCache);
                     HandleThermometer();
                 }
                 else /// TODO: Handle other devices.
@@ -437,13 +436,12 @@ namespace SmartHomeServer
                     int startIdx = idx + NETWORK_UPDATE_INTERVAL_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     int updateInterval = int.Parse(data.Substring(startIdx, endIdx - startIdx));
 
-                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                        string.Format("Received update interval: {0}", updateInterval) + '\n');
-
                     Dispatcher.Invoke(delegate ()
                     {
                         UpdateIntervalTextBlock.Text = updateInterval.ToString();
                     });
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
+                        string.Format("Received update interval: {0}", updateInterval) + '\n');
                 }
                 catch (FormatException)
                 {
@@ -462,7 +460,6 @@ namespace SmartHomeServer
                     {
                         TemperatureValueLabel.Content = temperature.ToString("F2");
                     });
-
                     Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
                         string.Format("Received temperature: {0}", temperature.ToString("F2")) + '\n');
                 }
@@ -493,7 +490,10 @@ namespace SmartHomeServer
         {
             foreach (string data in dataSet)
             {
-                if (string.IsNullOrEmpty(data) && !data.Equals("")) ProcessThermometerData(data);
+                if (string.IsNullOrEmpty(data) && !data.Equals(""))
+                {
+                    ProcessThermometerData(data);
+                }
             }
 
             dataSet.Clear();
@@ -502,7 +502,6 @@ namespace SmartHomeServer
         private void SendThermometerUpdateInterval(ref TcpClient socket, double updateInterval)
         {
             byte[] bytes = Encoding.Unicode.GetBytes(string.Format(NETWORK_UPDATE_INTERVAL_ARG + "{0}" + DELIMITER, updateInterval));
-
             Send(ref socket, ref bytes);
 
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + '\n');
@@ -511,7 +510,6 @@ namespace SmartHomeServer
         private void SendThermometerMethodToInvoke(ref TcpClient socket, string method)
         {
             byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
-
             Send(ref socket, ref bytes);
 
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Temperature update's been requested." + '\n');
@@ -521,19 +519,17 @@ namespace SmartHomeServer
         {
             AdjustThermometerBlock(false);
 
-            if (_Sockets[_ThermometerSocketIdx] != null)
+            if (_WorkerThreads[_ThermometerSocketIdx] != null && _WorkerThreads[_ThermometerSocketIdx].IsAlive)
             {
-                _Sockets[_ThermometerSocketIdx].Close();
+                _WorkerThreads[_ThermometerSocketIdx].Abort();
             }
-
             if (_ListenerThreads[_ThermometerSocketIdx] != null && _ListenerThreads[_ThermometerSocketIdx].IsAlive)
             {
                 _ListenerThreads[_ThermometerSocketIdx].Abort();
             }
-
-            if (_WorkerThreads[_ThermometerSocketIdx] != null && _WorkerThreads[_ThermometerSocketIdx].IsAlive)
+            if (_Sockets[_ThermometerSocketIdx] != null)
             {
-                _WorkerThreads[_ThermometerSocketIdx].Abort();
+                _Sockets[_ThermometerSocketIdx].Close();
             }
         }
 
