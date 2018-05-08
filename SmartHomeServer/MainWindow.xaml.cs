@@ -162,62 +162,72 @@ namespace SmartHomeServer
             };
         }
 
+        private Thread ConfigureListenerThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    _ListenerMutex.WaitOne();
+
+                    _NetworkListener.Start();
+                    TcpClient socket = _NetworkListener.AcceptTcpClient();
+                    _NetworkListener.Stop();
+                    HandleNewClient(ref socket);
+
+                    _ListenerMutex.ReleaseMutex();
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _ListenerMutex.ReleaseMutex();
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+                }
+                catch (SocketException)
+                {
+                    try
+                    {
+                        _ListenerMutex.ReleaseMutex();
+                        Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+                }
+                catch (Exception exc)
+                {
+                    try
+                    {
+                        _ListenerMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+
+                    Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
+                }
+            }));
+        }
+
         private void ConfigureListenerThreads()
         {
             for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
             {
-                _ListenerThreads[idx] = new Thread(new ThreadStart(delegate ()
-                {
-                    try
-                    {
-                        _ListenerMutex.WaitOne();
-
-                        _NetworkListener.Start();
-                        TcpClient socket = _NetworkListener.AcceptTcpClient();
-                        _NetworkListener.Stop();
-                        HandleNewClient(ref socket);
-
-                        _ListenerMutex.ReleaseMutex();
-                    }
-                    catch (ThreadAbortException)
-                    {
-                        try
-                        {
-                            _ListenerMutex.ReleaseMutex();
-                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
-                        }
-                        catch (ApplicationException)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-                    catch (SocketException)
-                    {
-                        try
-                        {
-                            _ListenerMutex.ReleaseMutex();
-                            Log(NETWORK_LOG_LABEL + "Network listener was closed" + '\n');
-                        }
-                        catch (ApplicationException)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-                    catch (Exception exc)
-                    {
-                        try
-                        {
-                            _ListenerMutex.ReleaseMutex();
-                        }
-                        catch (ApplicationException)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-
-                        Log(NETWORK_LOG_LABEL + "Unable to establish connection with client: " + exc.Message + '\n');
-                    }
-                }));
+                _ListenerThreads[idx] = ConfigureListenerThread();
             }
+        }
+
+        private void ConfigureThermometerListenerThread()
+        {
+            _ListenerThreads[_ThermometerSocketIdx] = ConfigureListenerThread();
         }
 
         private Thread ConfigureThermometerWorkerThread()
