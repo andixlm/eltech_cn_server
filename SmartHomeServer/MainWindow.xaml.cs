@@ -248,11 +248,6 @@ namespace SmartHomeServer
             }
         }
 
-        private void ConfigureThermometerListenerThread()
-        {
-            _ListenerThreads[_ThermometerIdx] = ConfigureListenerThread();
-        }
-
         private Thread ConfigureThermometerWorkerThread()
         {
             return new Thread(new ThreadStart(delegate ()
