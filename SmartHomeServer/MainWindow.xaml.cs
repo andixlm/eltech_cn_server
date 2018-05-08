@@ -254,7 +254,7 @@ namespace SmartHomeServer
             {
                 try
                 {
-                    while (_Sockets[_ThermometerIdx].Connected)
+                    while (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                     {
                         ProcessThermometerData(ref _ThermometerCache);
 
