@@ -566,11 +566,21 @@ namespace SmartHomeServer
 
         private void Log(string info)
         {
-            Dispatcher.Invoke(delegate ()
+            try
             {
-                LogTextBlock.AppendText(info);
-                if (_ShouldScrollToEnd) LogTextBlock.ScrollToEnd();
-            });
+                Dispatcher.Invoke(delegate ()
+                {
+                    LogTextBlock.AppendText(info);
+                    if (_ShouldScrollToEnd)
+                    {
+                        LogTextBlock.ScrollToEnd();
+                    }
+                });
+            }
+            catch (TaskCanceledException)
+            {
+                Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "TaskCancelledException while Log's being executed" + '\n');
+            }
         }
     }
 }
