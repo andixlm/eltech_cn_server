@@ -553,7 +553,7 @@ namespace SmartHomeServer
             {
                 try
                 {
-                    int startIdx = idx + NETWORK_TEMPERATURE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    int startIdx = idx + NETWORK_STATUS_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     int status = int.Parse(data.Substring(startIdx, endIdx - startIdx));
 
                     if (status == DEVICE_STATUS_UP)
