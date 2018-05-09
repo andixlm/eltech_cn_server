@@ -1116,6 +1116,8 @@ namespace SmartHomeServer
         {
             Dispatcher.Invoke(delegate ()
             {
+                PortTextBox.IsEnabled = !isConnected;
+
                 StartServerButton.IsEnabled = !isConnected;
                 StopServerButton.IsEnabled = isConnected;
             });
