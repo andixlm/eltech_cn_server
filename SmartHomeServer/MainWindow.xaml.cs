@@ -373,7 +373,10 @@ namespace SmartHomeServer
         {
             try
             {
-                _Port = int.Parse(PortTextBox.Text);
+                Dispatcher.Invoke(delegate ()
+                {
+                    _Port = int.Parse(PortTextBox.Text);
+                });
                 if (_Port < MINIMAL_PORT_VALUE || _Port > MAXIMAL_PORT_VALUE)
                 {
                     throw new Exception(string.Format("Incorrect port value. [{0}; {1}] ports are allowed.",
