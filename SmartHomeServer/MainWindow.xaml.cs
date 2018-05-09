@@ -144,7 +144,10 @@ namespace SmartHomeServer
 
             Closed += (sender, e) =>
             {
-                StopServer();
+                new Thread(new ThreadStart(delegate ()
+                {
+                    StopServer();
+                })).Start();
             };
 
             _Port = sRandom.Next(MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE);
@@ -159,7 +162,10 @@ namespace SmartHomeServer
             StopServerButton.IsEnabled = false;
             StopServerButton.Click += (sender, e) =>
             {
-                StopServer();
+                new Thread(new ThreadStart(delegate ()
+                {
+                    StopServer();
+                })).Start();
             };
 
             AdjustThermometerBlock(false);
