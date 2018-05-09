@@ -322,7 +322,7 @@ namespace SmartHomeServer
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
-                            "Light switcher worker thread was closed" + '\n');
+                            "Light switcher worker thread was terminated." + '\n');
                     }
                 }
             }));
@@ -350,7 +350,7 @@ namespace SmartHomeServer
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
-                            "Mutex's been tried to be released not by the owner thread." + '\n');
+                            "Light switcher status thread was terminated." + '\n');
                     }
                 }
             }));
@@ -377,7 +377,7 @@ namespace SmartHomeServer
                 {
                     if (_VerboseLogging)
                     {
-                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
+                        Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was terminated." + '\n');
                     }
                 }
             }));
@@ -432,7 +432,7 @@ namespace SmartHomeServer
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
-                            "Motion detector worker thread was closed" + '\n');
+                            "Motion detector worker thread was terminated." + '\n');
                     }
                 }
             }));
@@ -460,7 +460,7 @@ namespace SmartHomeServer
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
-                            "Mutex's been tried to be released not by the owner thread." + '\n');
+                            "Motion detector status thread was terminated." + '\n');
                     }
                 }
             }));
