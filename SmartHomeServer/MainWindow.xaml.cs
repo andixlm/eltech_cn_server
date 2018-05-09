@@ -85,8 +85,6 @@ namespace SmartHomeServer
         private TcpClient[] _Sockets;
 
         private Mutex _ListenerMutex;
-        private Mutex _ReceiveMutex;
-        private Mutex _SendMutex;
         private Mutex _DataMutex;
 
         private List<string> _Cache;
@@ -125,8 +123,6 @@ namespace SmartHomeServer
             _Sockets = new TcpClient[MAXIMAL_CLIENTS_NUM_VALUE];
 
             _ListenerMutex = new Mutex();
-            _ReceiveMutex = new Mutex();
-            _SendMutex = new Mutex();
             _DataMutex = new Mutex();
 
             _Cache = new List<string>();
@@ -324,32 +320,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
-                    try
-                    {
-                        _ReceiveMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
@@ -378,19 +348,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
@@ -419,30 +376,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
-                    try
-                    {
-                        _ReceiveMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer worker thread was closed" + '\n');
@@ -470,18 +403,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status thread was terminated." + '\n');
@@ -509,32 +430,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
-                    try
-                    {
-                        _ReceiveMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
@@ -563,19 +458,6 @@ namespace SmartHomeServer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
-                    {
-                        _SendMutex.ReleaseMutex();
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
-                                "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
-                    }
-
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
@@ -654,8 +536,6 @@ namespace SmartHomeServer
 
         private void Send(ref TcpClient socket, ref byte[] bytes)
         {
-            _SendMutex.WaitOne();
-
             try
             {
                 NetworkStream stream = socket.GetStream();
@@ -672,14 +552,10 @@ namespace SmartHomeServer
                         (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
                 }
             }
-
-            _SendMutex.ReleaseMutex();
         }
 
         private void Receive(ref TcpClient socket, ref byte[] bytes)
         {
-            _ReceiveMutex.WaitOne();
-
             try
             {
                 NetworkStream stream = socket.GetStream();
@@ -695,8 +571,6 @@ namespace SmartHomeServer
                         (exc.InnerException != null ? exc.InnerException.Message : exc.Message) + '\n');
                 }
             }
-
-            _ReceiveMutex.ReleaseMutex();
         }
 
         private void HandleNewClient(ref TcpClient socket)
