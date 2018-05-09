@@ -144,10 +144,13 @@ namespace SmartHomeServer
 
             Closed += (sender, e) =>
             {
-                new Thread(new ThreadStart(delegate ()
+                if (!StartServerButton.IsEnabled)
                 {
-                    StopServer();
-                })).Start();
+                    new Thread(new ThreadStart(delegate ()
+                    {
+                        StopServer();
+                    })).Start();
+                }
             };
 
             _Port = sRandom.Next(MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE);
