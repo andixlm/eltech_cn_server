@@ -195,6 +195,14 @@ namespace SmartHomeServer
             AdjustThermometerBlock(false);
             AdjustMotionDetectorBlock(false);
 
+            LightSwitcherSwitchButton.Click += (sender, e) =>
+            {
+                if (_Sockets[_LightSwitcherIdx] != null && _Sockets[_LightSwitcherIdx].Connected)
+                {
+                    SendMethodToInvoke(ref _Sockets[_LightSwitcherIdx], NETWORK_LIGHT_SWITCHER_METHOD_TO_SWITCH);
+                }
+            };
+
             UpdateIntervalSetButton.Click += (sender, e) =>
             {
                 try
