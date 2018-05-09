@@ -106,8 +106,6 @@
                                     <Label Content="Scroll To End" VerticalAlignment="Center" HorizontalAlignment="Center" />
                                 </StackPanel>
 
-                                <Separator />
-
                                 <TextBox Name="LogTextBlock" Height="96" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
 
                             </StackPanel>
