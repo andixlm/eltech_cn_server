@@ -696,6 +696,7 @@ namespace SmartHomeServer
                             Dispatcher.Invoke(delegate ()
                             {
                                 CloseThermometerConnection();
+                                ThermometerConnectionValueLabel.Content = CONNECTION_ERR;
                             });
                             break;
 
