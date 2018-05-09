@@ -33,10 +33,10 @@ namespace SmartHomeServer
         private static readonly int MAXIMAL_PORT_VALUE = 49151;
 
         private static readonly string CONNECTION_LOG_LABEL = "Connection: ";
-        private static readonly string CONNECTION_UP = "UP";
-        private static readonly string CONNECTION_WAIT = "WAIT";
-        private static readonly string CONNECTION_DOWN = "DOWN";
-        private static readonly string CONNECTION_ERR = "ERR";
+        private static readonly string CONNECTION_UP = "up";
+        private static readonly string CONNECTION_WAIT = "wait";
+        private static readonly string CONNECTION_DOWN = "down";
+        private static readonly string CONNECTION_ERR = "err";
 
         private static readonly string UPDATE_INTERVAL_LOG_LABEL = "Update interval: ";
 
