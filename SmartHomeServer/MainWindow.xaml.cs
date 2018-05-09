@@ -41,15 +41,24 @@ namespace SmartHomeServer
         private static readonly string UPDATE_INTERVAL_LOG_LABEL = "Update interval: ";
 
         private static readonly string NETWORK_LOG_LABEL = "Network: ";
+        private static readonly string NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL = "Light Switcher: ";
         private static readonly string NETWORK_DEVICE_THERMOMETER_LOG_LABEL = "Thermometer: ";
+        private static readonly string NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL = "Motion Detector: ";
 
         private static readonly string NETWORK_DEVICE_ARG = "Device: ";
+        private static readonly string NETWORK_DEVICE_LIGHT_SWITCHER = "LightSwitcher";
         private static readonly string NETWORK_DEVICE_THERMOMETER = "Thermometer";
+        private static readonly string NETWORK_DEVICE_MOTION_DETECTOR = "MotionDetector";
+
+        private static readonly string NETWORK_LIGHTS_ARG = "Lights: ";
         private static readonly string NETWORK_TEMPERATURE_ARG = "Temperatute: ";
         private static readonly string NETWORK_UPDATE_INTERVAL_ARG = "Update interval: ";
+        private static readonly string NETWORK_TIME_ARG = "Time: ";
+
         private static readonly string NETWORK_METHOD_TO_INVOKE_ARG = "Method: ";
         private static readonly string NETWORK_STATUS_ARG = "Status: ";
 
+        private static readonly string NETWORK_LIGHT_SWITCHER_METHOD_TO_SWITCH = "SWITCH";
         private static readonly string NETWORK_THERMOMETER_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
         private static readonly string NETWORK_METHOD_TO_DISCONNECT = "DISCONNECT";
         private static readonly string NETWORK_METHOD_TO_REQUEST_STATUS = "REQUEST_STATUS";
@@ -61,6 +70,8 @@ namespace SmartHomeServer
         private static readonly int DEVICE_STATUS_CHECK_TIMEOUT = 3000;
 
         private static readonly Random sRandom = new Random();
+
+        private static readonly DateTime sEpochTime = new DateTime(1970, 1, 1);
 
         private bool _VerboseLogging;
         private bool _ShouldScrollToEnd;
@@ -79,9 +90,15 @@ namespace SmartHomeServer
         private Mutex _DataMutex;
 
         private List<string> _Cache;
+        private List<string> _LightSwitcherCache;
         private List<string> _ThermometerCache;
+        private List<string> _MotionDetectorCache;
+
+        private bool _LightSwitcherStatus;
 
         private int _ThermometerUpdateInterval;
+
+        private DateTime _MotionDetectorTime;
 
         private const int _LightSwitcherIdx = 0;
         private const int _ThermometerIdx = 1;
@@ -113,13 +130,17 @@ namespace SmartHomeServer
             _DataMutex = new Mutex();
 
             _Cache = new List<string>();
+            _LightSwitcherCache = new List<string>();
             _ThermometerCache = new List<string>();
-
-            _ThermometerUpdateInterval = 1;
+            _MotionDetectorCache = new List<string>();
         }
 
         private void Configure()
         {
+            _LightSwitcherStatus = false;
+            _ThermometerUpdateInterval = 1; ;
+            _MotionDetectorTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
             _VerboseLogging = false;
             VerobseLoggingCheckBox.IsChecked = _VerboseLogging;
             VerobseLoggingCheckBox.Checked += (sender, e) =>
@@ -174,7 +195,9 @@ namespace SmartHomeServer
                 })).Start();
             };
 
+            AdjustLightSwitcherBlock(false);
             AdjustThermometerBlock(false);
+            AdjustMotionDetectorBlock(false);
 
             UpdateIntervalSetButton.Click += (sender, e) =>
             {
@@ -199,7 +222,7 @@ namespace SmartHomeServer
             {
                 if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                 {
-                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_THERMOMETER_METHOD_TO_UPDATE_TEMP);
+                    SendMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_THERMOMETER_METHOD_TO_UPDATE_TEMP);
                 }
             };
         }
@@ -282,6 +305,101 @@ namespace SmartHomeServer
             }
         }
 
+        private Thread ConfigureLightSwitcherWorkerThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_LightSwitcherIdx] != null && _Sockets[_LightSwitcherIdx].Connected)
+                    {
+                        ProcessLightSwitcherData(ref _LightSwitcherCache);
+
+                        byte[] bytes = new byte[BUFFER_SIZE];
+                        Receive(ref _Sockets[_LightSwitcherIdx], ref bytes);
+
+                        string data = Encoding.Unicode.GetString(bytes);
+                        ProcessLightSwitcherData(CacheData(data, ref _LightSwitcherCache));
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    try
+                    {
+                        _ReceiveMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                            "Light switcher worker thread was closed" + '\n');
+                    }
+                }
+            }));
+        }
+
+        private Thread ConfigureLightSwitcherStatusThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_LightSwitcherIdx] != null && _Sockets[_LightSwitcherIdx].Connected)
+                    {
+                        SendMethodToInvoke(ref _Sockets[_LightSwitcherIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL + "Status was requested." + '\n');
+                        }
+
+                        Thread.Sleep(DEVICE_STATUS_CHECK_TIMEOUT);
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                            "Mutex's been tried to be released not by the owner thread." + '\n');
+                    }
+                }
+            }));
+        }
+
         private Thread ConfigureThermometerWorkerThread()
         {
             return new Thread(new ThreadStart(delegate ()
@@ -341,7 +459,7 @@ namespace SmartHomeServer
                 {
                     while (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                     {
-                        SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
+                        SendMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
                         if (_VerboseLogging)
                         {
                             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status was requested." + '\n');
@@ -367,6 +485,101 @@ namespace SmartHomeServer
                     if (_VerboseLogging)
                     {
                         Log(NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Status thread was terminated." + '\n');
+                    }
+                }
+            }));
+        }
+
+        private Thread ConfigureMotionDetectorWorkerThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_MotionDetectorIdx] != null && _Sockets[_MotionDetectorIdx].Connected)
+                    {
+                        ProcessMotionDetectorData(ref _MotionDetectorCache);
+
+                        byte[] bytes = new byte[BUFFER_SIZE];
+                        Receive(ref _Sockets[_MotionDetectorIdx], ref bytes);
+
+                        string data = Encoding.Unicode.GetString(bytes);
+                        ProcessMotionDetectorData(CacheData(data, ref _MotionDetectorCache));
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    try
+                    {
+                        _ReceiveMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                            "Motion detector worker thread was closed" + '\n');
+                    }
+                }
+            }));
+        }
+
+        private Thread ConfigureMotionDetectorStatusThread()
+        {
+            return new Thread(new ThreadStart(delegate ()
+            {
+                try
+                {
+                    while (_Sockets[_MotionDetectorIdx] != null && _Sockets[_MotionDetectorIdx].Connected)
+                    {
+                        SendMethodToInvoke(ref _Sockets[_MotionDetectorIdx], NETWORK_METHOD_TO_REQUEST_STATUS);
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL + "Status was requested." + '\n');
+                        }
+
+                        Thread.Sleep(DEVICE_STATUS_CHECK_TIMEOUT);
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    try
+                    {
+                        _SendMutex.ReleaseMutex();
+                    }
+                    catch (ApplicationException)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                                "Mutex's been tried to be released not by the owner thread." + '\n');
+                        }
+                    }
+
+                    if (_VerboseLogging)
+                    {
+                        Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                            "Mutex's been tried to be released not by the owner thread." + '\n');
                     }
                 }
             }));
@@ -505,13 +718,25 @@ namespace SmartHomeServer
             {
                 int startIdx = idx + NETWORK_DEVICE_ARG.Length, endIdx = first.IndexOf(DELIMITER);
                 string device = first.Substring(startIdx, endIdx - startIdx);
-                if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
+                if (string.Equals(device, NETWORK_DEVICE_LIGHT_SWITCHER))
+                {
+                    _Sockets[_LightSwitcherIdx] = socket;
+                    MoveData(ref _Cache, ref _LightSwitcherCache);
+                    HandleLightSwitcher();
+                }
+                else if (string.Equals(device, NETWORK_DEVICE_THERMOMETER))
                 {
                     _Sockets[_ThermometerIdx] = socket;
                     MoveData(ref _Cache, ref _ThermometerCache);
                     HandleThermometer();
                 }
-                else /// TODO: Handle other devices.
+                else if (string.Equals(device, NETWORK_DEVICE_MOTION_DETECTOR))
+                {
+                    _Sockets[_MotionDetectorIdx] = socket;
+                    MoveData(ref _Cache, ref _MotionDetectorCache);
+                    HandleMotionDetector();
+                }
+                else
                 {
                     Log(NETWORK_LOG_LABEL + "Unknown device tried to connect." + '\n');
                 }
@@ -522,16 +747,40 @@ namespace SmartHomeServer
             }
         }
 
+        private void HandleLightSwitcher()
+        {
+            AdjustLightSwitcherBlock(true);
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL + "Connected" + '\n');
+
+            _WorkerThreads[_LightSwitcherIdx] = ConfigureLightSwitcherWorkerThread();
+            _WorkerThreads[_LightSwitcherIdx].Start();
+
+            _StatusThreads[_LightSwitcherIdx] = ConfigureLightSwitcherStatusThread();
+            _StatusThreads[_LightSwitcherIdx].Start();
+        }
+
         private void HandleThermometer()
         {
             AdjustThermometerBlock(true);
-            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER + " connected" + '\n');
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Connected" + '\n');
 
             _WorkerThreads[_ThermometerIdx] = ConfigureThermometerWorkerThread();
             _WorkerThreads[_ThermometerIdx].Start();
 
             _StatusThreads[_ThermometerIdx] = ConfigureThermometerStatusThread();
             _StatusThreads[_ThermometerIdx].Start();
+        }
+
+        private void HandleMotionDetector()
+        {
+            AdjustMotionDetectorBlock(true);
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL + "Connected" + '\n');
+
+            _WorkerThreads[_MotionDetectorIdx] = ConfigureMotionDetectorWorkerThread();
+            _WorkerThreads[_MotionDetectorIdx].Start();
+
+            _StatusThreads[_MotionDetectorIdx] = ConfigureMotionDetectorStatusThread();
+            _StatusThreads[_MotionDetectorIdx].Start();
         }
 
         string CacheData(string data, ref List<string> cache)
@@ -547,6 +796,109 @@ namespace SmartHomeServer
             }
 
             return first;
+        }
+
+        private void ProcessLightSwitcherData(string data)
+        {
+            if (string.IsNullOrEmpty(data) || data.Equals(""))
+            {
+                return;
+            }
+
+            int idx;
+            if ((idx = data.IndexOf(NETWORK_LIGHTS_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_LIGHTS_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    bool lights = _LightSwitcherStatus = bool.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        LightSwitcherStatusValueLabel.Content = lights ? "on" : "off";
+                    });
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                        string.Format("Received lights status: {0}", lights ? "on" : "off") + '\n');
+                }
+                catch (FormatException)
+                {
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                        "Received incorrect lights status" + '\n');
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_STATUS_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_STATUS_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    int status = int.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    if (status == DEVICE_STATUS_UP)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL + "Device is up." + '\n');
+                        }
+                    }
+                    else
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            CloseLightSwitcherConnection();
+                        });
+
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                                "Device sent bad status, connection's closed." + '\n');
+                        }
+                    }
+                }
+                catch (FormatException)
+                {
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                        "Received incorrect device status" + '\n');
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_METHOD_TO_INVOKE_ARG)) >= 0)
+            {
+                int startIdx = idx + NETWORK_METHOD_TO_INVOKE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                string method = data.Substring(startIdx, endIdx - startIdx);
+
+                if (!string.IsNullOrEmpty(method) && method.Equals(NETWORK_LIGHT_SWITCHER_METHOD_TO_SWITCH))
+                {
+                    _LightSwitcherStatus = !_LightSwitcherStatus;
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        LightSwitcherStatusValueLabel.Content = _LightSwitcherStatus ? "on" : "off";
+                    });
+
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                        "Switched." + '\n');
+                }
+                else if (!string.IsNullOrEmpty(method) && method.Equals(NETWORK_METHOD_TO_DISCONNECT))
+                {
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        CloseLightSwitcherConnection();
+                    });
+                }
+            }
+            else
+            {
+                Log(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL +
+                    "Unknown data received: \"{0}\"" + '\n', data));
+            }
+        }
+
+        private void ProcessLightSwitcherData(ref List<string> dataSet)
+        {
+            foreach (string data in dataSet)
+            {
+                ProcessLightSwitcherData(data);
+            }
+
+            dataSet.Clear();
         }
 
         private void ProcessThermometerData(string data)
@@ -660,6 +1012,100 @@ namespace SmartHomeServer
             dataSet.Clear();
         }
 
+        private void ProcessMotionDetectorData(string data)
+        {
+            if (string.IsNullOrEmpty(data) || data.Equals(""))
+            {
+                return;
+            }
+
+            int idx;
+            if ((idx = data.IndexOf(NETWORK_TIME_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_TIME_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    long time = long.Parse(data.Substring(startIdx, endIdx - startIdx));
+                    _MotionDetectorTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                    _MotionDetectorTime.AddSeconds(time);
+
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        MotionDetectorLastTimeValueLabel.Content = _MotionDetectorTime.ToString();
+                    });
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                        string.Format("Received time: {0}", time) + '\n');
+                }
+                catch (FormatException)
+                {
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                        "Received incorrect time" + '\n');
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_STATUS_ARG)) >= 0)
+            {
+                try
+                {
+                    int startIdx = idx + NETWORK_STATUS_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                    int status = int.Parse(data.Substring(startIdx, endIdx - startIdx));
+
+                    if (status == DEVICE_STATUS_UP)
+                    {
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL + "Device is up." + '\n');
+                        }
+                    }
+                    else
+                    {
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            CloseMotionDetectorConnection();
+                        });
+
+                        if (_VerboseLogging)
+                        {
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                                "Device sent bad status, connection's closed." + '\n');
+                        }
+                    }
+                }
+                catch (FormatException)
+                {
+                    Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                        "Received incorrect device status" + '\n');
+                }
+            }
+            else if ((idx = data.IndexOf(NETWORK_METHOD_TO_INVOKE_ARG)) >= 0)
+            {
+                int startIdx = idx + NETWORK_METHOD_TO_INVOKE_ARG.Length, endIdx = data.IndexOf(DELIMITER);
+                string method = data.Substring(startIdx, endIdx - startIdx);
+
+                if (!string.IsNullOrEmpty(method) && method.Equals(NETWORK_METHOD_TO_DISCONNECT))
+                {
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        CloseMotionDetectorConnection();
+                    });
+                }
+            }
+            else
+            {
+                Log(string.Format(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL +
+                    "Unknown data received: \"{0}\"" + '\n', data));
+            }
+        }
+
+        private void ProcessMotionDetectorData(ref List<string> dataSet)
+        {
+            foreach (string data in dataSet)
+            {
+                ProcessMotionDetectorData(data);
+            }
+
+            dataSet.Clear();
+        }
+
         private void SendThermometerUpdateInterval(ref TcpClient socket, double updateInterval)
         {
             byte[] bytes = Encoding.Unicode.GetBytes(string.Format(NETWORK_UPDATE_INTERVAL_ARG + "{0}" + DELIMITER, updateInterval));
@@ -668,18 +1114,41 @@ namespace SmartHomeServer
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Sent update interval" + '\n');
         }
 
-        private void SendThermometerMethodToInvoke(ref TcpClient socket, string method)
+        private void SendMethodToInvoke(ref TcpClient socket, string method)
         {
             byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
             Send(ref socket, ref bytes);
 
             if (_VerboseLogging)
             {
-                Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL +
-                    "Method to invoke: " + method + '.' + '\n');
+                Log(NETWORK_LOG_LABEL + "Method to invoke: " + method + '.' + '\n');
             }
         }
 
+        /// TODO: Implement common method to close connection based on index.
+        private void CloseLightSwitcherConnection()
+        {
+            if (_WorkerThreads[_LightSwitcherIdx] != null && _WorkerThreads[_LightSwitcherIdx].IsAlive)
+            {
+                _WorkerThreads[_LightSwitcherIdx].Abort();
+            }
+            if (_ListenerThreads[_LightSwitcherIdx] != null && _ListenerThreads[_LightSwitcherIdx].IsAlive)
+            {
+                _ListenerThreads[_LightSwitcherIdx].Abort();
+            }
+            if (_Sockets[_LightSwitcherIdx] != null)
+            {
+                _Sockets[_LightSwitcherIdx].Close();
+            }
+
+            /// Recreate and run listener for the reason server hasn't been stopped.
+            _ListenerThreads[_LightSwitcherIdx] = ConfigureListenerThread();
+            _ListenerThreads[_LightSwitcherIdx].Start();
+
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL + "Disconnected." + '\n');
+        }
+
+        /// TODO: Implement common method to close connection based on index.
         private void CloseThermometerConnection()
         {
             AdjustThermometerBlock(false);
@@ -704,6 +1173,39 @@ namespace SmartHomeServer
             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Disconnected." + '\n');
         }
 
+        /// TODO: Implement common method to close connection based on index.
+        private void CloseMotionDetectorConnection()
+        {
+            if (_WorkerThreads[_MotionDetectorIdx] != null && _WorkerThreads[_MotionDetectorIdx].IsAlive)
+            {
+                _WorkerThreads[_MotionDetectorIdx].Abort();
+            }
+            if (_ListenerThreads[_MotionDetectorIdx] != null && _ListenerThreads[_MotionDetectorIdx].IsAlive)
+            {
+                _ListenerThreads[_MotionDetectorIdx].Abort();
+            }
+            if (_Sockets[_MotionDetectorIdx] != null)
+            {
+                _Sockets[_MotionDetectorIdx].Close();
+            }
+
+            /// Recreate and run listener for the reason server hasn't been stopped.
+            _ListenerThreads[_MotionDetectorIdx] = ConfigureListenerThread();
+            _ListenerThreads[_MotionDetectorIdx].Start();
+
+            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL + "Disconnected." + '\n');
+        }
+
+        private void AdjustLightSwitcherBlock(bool isConnected)
+        {
+            Dispatcher.Invoke(delegate ()
+            {
+                LightSwitcherConnectionValueLabel.Content = isConnected ? CONNECTION_UP
+                                                                        : CONNECTION_DOWN;
+                LightSwitcherSwitchButton.IsEnabled = isConnected;
+            });
+        }
+
         private void AdjustThermometerBlock(bool isConnected)
         {
             Dispatcher.Invoke(delegate ()
@@ -713,6 +1215,15 @@ namespace SmartHomeServer
 
                 UpdateIntervalSetButton.IsEnabled = isConnected;
                 TemperatureUpdateButton.IsEnabled = isConnected;
+            });
+        }
+
+        private void AdjustMotionDetectorBlock(bool isConnected)
+        {
+            Dispatcher.Invoke(delegate ()
+            {
+                MotionDetectorConnectionValueLabel.Content = isConnected ? CONNECTION_UP
+                                                                         : CONNECTION_DOWN;
             });
         }
 
@@ -734,6 +1245,12 @@ namespace SmartHomeServer
                     switch (idx)
                     {
                         case _LightSwitcherIdx:
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_LIGHT_SWITCHER_LOG_LABEL + "Light switcher doesn't respond." + '\n');
+                            Dispatcher.Invoke(delegate ()
+                            {
+                                CloseLightSwitcherConnection();
+                                LightSwitcherConnectionValueLabel.Content = CONNECTION_ERR;
+                            });
                             break;
 
                         case _ThermometerIdx:
@@ -746,6 +1263,12 @@ namespace SmartHomeServer
                             break;
 
                         case _MotionDetectorIdx:
+                            Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_MOTION_DETECTOR_LOG_LABEL + "Motion detector doesn't respond." + '\n');
+                            Dispatcher.Invoke(delegate ()
+                            {
+                                CloseMotionDetectorConnection();
+                                MotionDetectorConnectionValueLabel.Content = CONNECTION_ERR;
+                            });
                             break;
 
                         default:
