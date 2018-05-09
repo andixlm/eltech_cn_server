@@ -156,7 +156,10 @@ namespace SmartHomeServer
             StartServerButton.IsEnabled = true;
             StartServerButton.Click += (sender, e) =>
             {
-                StartServer();
+                new Thread(new ThreadStart(delegate ()
+                {
+                    StartServer();
+                })).Start();
             };
 
             StopServerButton.IsEnabled = false;
@@ -385,7 +388,10 @@ namespace SmartHomeServer
                     _ListenerThreads[idx].Start();
                 }
 
-                ServerStatusLabel.Content = CONNECTION_UP;
+                Dispatcher.Invoke(delegate ()
+                {
+                    ServerStatusLabel.Content = CONNECTION_UP;
+                });
                 SwitchButtonsOnConnectionStatusChanged(true);
                 Log(NETWORK_LOG_LABEL + "Server successfully started." + '\n');
             }
