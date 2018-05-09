@@ -538,6 +538,10 @@ namespace SmartHomeServer
                 ServerStatusLabel.Content = CONNECTION_DOWN;
             });
             SwitchButtonsOnConnectionStatusChanged(false);
+            AdjustLightSwitcherBlock(false);
+            AdjustThermometerBlock(false);
+            AdjustMotionDetectorBlock(false);
+
             Log(NETWORK_LOG_LABEL + "Server successfully stopped." + '\n');
         }
 
