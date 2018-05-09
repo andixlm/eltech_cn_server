@@ -230,13 +230,12 @@ namespace SmartHomeServer
                 try
                 {
                     _ListenerMutex.WaitOne();
-
                     _NetworkListener.Start();
                     TcpClient socket = _NetworkListener.AcceptTcpClient();
                     _NetworkListener.Stop();
-                    HandleNewClient(ref socket);
-
                     _ListenerMutex.ReleaseMutex();
+
+                    HandleNewClient(ref socket);
                 }
                 catch (ThreadAbortException)
                 {
