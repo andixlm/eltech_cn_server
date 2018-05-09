@@ -99,9 +99,6 @@ namespace SmartHomeServer
 
         private void Init()
         {
-            _VerboseLogging = false;
-            _ShouldScrollToEnd = true;
-
             _NetworkListener = default(TcpListener);
 
             _ListenerThreads = new Thread[MAXIMAL_THREADS_NUM_VALUE];
@@ -123,6 +120,28 @@ namespace SmartHomeServer
 
         private void Configure()
         {
+            _VerboseLogging = false;
+            VerobseLoggingCheckBox.IsChecked = _VerboseLogging;
+            VerobseLoggingCheckBox.Checked += (sender, e) =>
+            {
+                _VerboseLogging = true;
+            };
+            VerobseLoggingCheckBox.Unchecked += (sender, e) =>
+            {
+                _VerboseLogging = false;
+            };
+
+            _ShouldScrollToEnd = true;
+            ScrollToEndCheckBox.IsChecked = _ShouldScrollToEnd;
+            ScrollToEndCheckBox.Checked += (sender, e) =>
+            {
+                _ShouldScrollToEnd = true;
+            };
+            ScrollToEndCheckBox.Unchecked += (sender, e) =>
+            {
+                _ShouldScrollToEnd = false;
+            };
+
             Closed += (sender, e) =>
             {
                 StopServer();
