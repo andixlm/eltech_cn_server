@@ -397,6 +397,10 @@ namespace SmartHomeServer
             }
             catch (Exception exc)
             {
+                Dispatcher.Invoke(delegate ()
+                {
+                    ServerStatusLabel.Content = CONNECTION_ERR;
+                });
                 Log(NETWORK_LOG_LABEL + "Unable to start server: " + exc.Message + '\n');
             }
         }
