@@ -1009,6 +1009,8 @@ namespace SmartHomeServer
         /// TODO: Implement common method to close connection based on index.
         private void CloseLightSwitcherConnection()
         {
+            AdjustLightSwitcherBlock(false);
+
             if (_WorkerThreads[_LightSwitcherIdx] != null && _WorkerThreads[_LightSwitcherIdx].IsAlive)
             {
                 _WorkerThreads[_LightSwitcherIdx].Abort();
@@ -1057,6 +1059,8 @@ namespace SmartHomeServer
         /// TODO: Implement common method to close connection based on index.
         private void CloseMotionDetectorConnection()
         {
+            AdjustMotionDetectorBlock(false);
+
             if (_WorkerThreads[_MotionDetectorIdx] != null && _WorkerThreads[_MotionDetectorIdx].IsAlive)
             {
                 _WorkerThreads[_MotionDetectorIdx].Abort();
