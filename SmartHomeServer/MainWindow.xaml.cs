@@ -568,7 +568,10 @@ namespace SmartHomeServer
                     }
                     else
                     {
-                        CloseThermometerConnection();
+                        Dispatcher.Invoke(delegate ()
+                        {
+                            CloseThermometerConnection();
+                        });
 
                         if (_VerboseLogging)
                         {
@@ -589,7 +592,10 @@ namespace SmartHomeServer
 
                 if (!string.IsNullOrEmpty(method) && method.Equals(NETWORK_METHOD_TO_DISCONNECT))
                 {
-                    CloseThermometerConnection();
+                    Dispatcher.Invoke(delegate ()
+                    {
+                        CloseThermometerConnection();
+                    });
                 }
             }
             else
@@ -686,7 +692,10 @@ namespace SmartHomeServer
                             break;
 
                         case _ThermometerIdx:
-                            CloseThermometerConnection();
+                            Dispatcher.Invoke(delegate ()
+                            {
+                                CloseThermometerConnection();
+                            });
                             Log(NETWORK_LOG_LABEL + NETWORK_DEVICE_THERMOMETER_LOG_LABEL + "Thermometer doesn't respond." + '\n');
                             break;
 
