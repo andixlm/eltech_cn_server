@@ -50,7 +50,7 @@ namespace SmartHomeServer
         private static readonly string NETWORK_METHOD_TO_INVOKE_ARG = "Method: ";
         private static readonly string NETWORK_STATUS_ARG = "Status: ";
 
-        private static readonly string NETWORK_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
+        private static readonly string NETWORK_THERMOMETER_METHOD_TO_UPDATE_TEMP = "UPDATE_TEMP";
         private static readonly string NETWORK_METHOD_TO_DISCONNECT = "DISCONNECT";
         private static readonly string NETWORK_METHOD_TO_REQUEST_STATUS = "REQUEST_STATUS";
 
@@ -199,7 +199,7 @@ namespace SmartHomeServer
             {
                 if (_Sockets[_ThermometerIdx] != null && _Sockets[_ThermometerIdx].Connected)
                 {
-                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_METHOD_TO_UPDATE_TEMP);
+                    SendThermometerMethodToInvoke(ref _Sockets[_ThermometerIdx], NETWORK_THERMOMETER_METHOD_TO_UPDATE_TEMP);
                 }
             };
         }
