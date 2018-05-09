@@ -908,7 +908,7 @@ namespace SmartHomeServer
                     int startIdx = idx + NETWORK_TIME_ARG.Length, endIdx = data.IndexOf(DELIMITER);
                     long time = long.Parse(data.Substring(startIdx, endIdx - startIdx));
                     _MotionDetectorTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    _MotionDetectorTime.AddSeconds(time);
+                    _MotionDetectorTime = _MotionDetectorTime.AddSeconds(time);
 
                     Dispatcher.Invoke(delegate ()
                     {
