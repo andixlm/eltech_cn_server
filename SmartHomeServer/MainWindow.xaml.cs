@@ -421,6 +421,10 @@ namespace SmartHomeServer
                 }
             }
 
+            Dispatcher.Invoke(delegate ()
+            {
+                ServerStatusLabel.Content = CONNECTION_DOWN;
+            });
             SwitchButtonsOnConnectionStatusChanged(false);
             Log(NETWORK_LOG_LABEL + "Server successfully stopped." + '\n');
         }
