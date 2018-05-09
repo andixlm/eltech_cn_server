@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SmartHomeServer"
         mc:Ignorable="d"
-        Title="SmartHomeServer" MinHeight="600" Height="600" MaxHeight="600" MinWidth="400" Width="400">
+        Title="SmartHomeServer" MinHeight="625" Height="625" MaxHeight="625" MinWidth="400" Width="400">
 
     <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch">
         <GroupBox Header="Server:" Margin="8">
@@ -95,6 +95,18 @@
                     <GroupBox Header="Log" Margin="4">
                         <Grid>
                             <StackPanel Margin="4" Orientation="Vertical">
+
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Name="VerobseLoggingCheckBox" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <Label Content="Verbose Logging" VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+                                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+
+                                    <CheckBox Name="ScrollToEndCheckBox" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4" />
+                                    <Label Content="Scroll To End" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                </StackPanel>
+
+                                <Separator />
 
                                 <TextBox Name="LogTextBlock" Height="96" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
 
