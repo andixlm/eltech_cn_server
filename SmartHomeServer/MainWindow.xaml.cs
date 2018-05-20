@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -488,7 +489,21 @@ namespace SmartHomeServer
                         MINIMAL_PORT_VALUE, MAXIMAL_PORT_VALUE));
                 }
 
-                _NetworkListener = new TcpListener(IPAddress.Parse(LOCALHOST_IPADDRESS), _Port);
+                IPAddress address = null;
+                foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                    {
+                        foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                            {
+                                address = ip.Address;
+                            }
+                        }
+                    }
+                }
+                _NetworkListener = new TcpListener(address, _Port);
 
                 ConfigureListenerThreads();
                 for (int idx = 0; idx < MAXIMAL_THREADS_NUM_VALUE; ++idx)
